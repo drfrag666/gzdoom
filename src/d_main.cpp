@@ -260,6 +260,10 @@ cycle_t FrameCycles;
 // [SP] Store the capabilities of the renderer in a global variable, to prevent excessive per-frame processing
 uint32_t r_renderercaps = 0;
 
+#ifndef _WIN32
+volatile
+#endif
+int game_running = 1;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -1050,7 +1054,7 @@ void D_DoomLoop ()
 
 	vid_cursor.Callback();
 
-	for (;;)
+	do
 	{
 		try
 		{
@@ -1107,7 +1111,7 @@ void D_DoomLoop ()
 			Printf("%s", error.stacktrace.GetChars());
 			D_ErrorCleanup();
 		}
-	}
+	} while (game_running);
 }
 
 //==========================================================================
@@ -2839,7 +2843,8 @@ void D_DoomMain (void)
 
 		GC::DelSoftRootHead();
 
-		PClass::StaticShutdown();
+		if (game_running)
+			PClass::StaticShutdown();
 
 		GC::FullGC();					// perform one final garbage collection after shutdown
 
@@ -2851,7 +2856,7 @@ void D_DoomMain (void)
 
 		gamestate = GS_STARTUP;
 	}
-	while (1);
+	while (game_running);
 }
 
 //==========================================================================

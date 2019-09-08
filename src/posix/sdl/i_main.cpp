@@ -85,6 +85,8 @@ void Linux_I_FatalError(const char* errortext);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+extern volatile int game_running;
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // The command line arguments.
@@ -95,6 +97,9 @@ FArgs *Args;
 
 // CODE --------------------------------------------------------------------
 
+void exit_handler(int dummy) {
+        game_running = 0;
+}
 
 static void NewFailure ()
 {
@@ -206,6 +211,17 @@ int main (int argc, char **argv)
 
 		atexit (call_terms);
 		atterm (I_Quit);
+		/*
+		  Register signal handlers to interrupt D_DoomMain and D_DoomLoop, allowing
+		  call_terms() to be invoked at the conclusion of the main thread/quit menu
+		  rather than at exit. The atexit() call can remain to handle edge cases
+		  where a signal cannot be intercepted, such as Alt+F4 or closing the window
+		  via the GUI.
+
+		  Fixes segmentation fault on exit when using the KMSDRM SDL video driver.
+		*/
+		signal(SIGINT, exit_handler);
+		signal(SIGTERM, exit_handler);
 
 		// Should we even be doing anything with progdir on Unix systems?
 		char program[PATH_MAX];
@@ -262,5 +278,6 @@ int main (int argc, char **argv)
 		call_terms ();
 		throw;
     }
+    call_terms();
     return 0;
 }
