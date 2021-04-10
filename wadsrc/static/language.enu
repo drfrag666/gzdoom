@@ -1783,6 +1783,7 @@ CNTRLMNU_POPUPS_TITLE				= "Strife Popup Screens Controls";
 CNTRLMNU_PAUSE					= "Pause";
 CNTRLMNU_DISPLAY_INC				= "Increase Display Size";
 CNTRLMNU_DISPLAY_DEC				= "Decrease Display Size";
+CNTRLMNU_OPEN_MAIN				= "Open Main Menu";
 CNTRLMNU_OPEN_HELP				= "Open Help";
 CNTRLMNU_OPEN_SAVE				= "Open Save Menu";
 CNTRLMNU_OPEN_LOAD				= "Open Load Menu";
