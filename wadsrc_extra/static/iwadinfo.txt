@@ -538,23 +538,9 @@ IWad
 
 IWad
 {
-	Name = "DOOM 2: Hell on Earth"
-	Autoname = "doom.id.doom2.commercial"
-	Game = "Doom"
-	Config = "Doom"
-	IWADName = "doom2.wad", 1
-	Mapinfo = "mapinfo/doom2.txt"
-	Compatibility = "Shorttex"
-	MustContain = "MAP01", "MAP30"
-	BannerColors = "a8 00 00", "a8 a8 a8"
-}
-
-// NRFTL must be last to be checked because MAP01 is its only requirement
-IWad
-{
 	Name = "DOOM 2: No Rest for the Living"
 	BannerColors = "a8 00 00", "a8 a8 a8"
-	MustContain = "MAP01"
+	MustContain = "MAP01", "MAPINFO"
 	Required = "DOOM 2: Hell on Earth"
 	Autoname = "doom.id.doom2.nerve"
 	Game = "Doom"
@@ -562,6 +548,20 @@ IWad
 	IWADName = "nerve.wad"
 	Mapinfo = "mapinfo/doom2.txt"
 	Compatibility = "Shorttex"
+}
+
+// Doom 2 must be last to be checked because MAP01 is its only requirement
+IWad
+{
+	Name = "DOOM 2: Hell on Earth"
+	Autoname = "doom.id.doom2.commercial"
+	Game = "Doom"
+	Config = "Doom"
+	IWADName = "doom2.wad", 1
+	Mapinfo = "mapinfo/doom2.txt"
+	Compatibility = "Shorttex"
+	MustContain = "MAP01"
+	BannerColors = "a8 00 00", "a8 a8 a8"
 }
 
 
