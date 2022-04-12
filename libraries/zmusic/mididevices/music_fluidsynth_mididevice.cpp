@@ -259,7 +259,8 @@ FluidSynthMIDIDevice::~FluidSynthMIDIDevice()
 
 int FluidSynthMIDIDevice::OpenRenderer()
 {
-	fluid_synth_system_reset(FluidSynth);
+	// Send MIDI system reset command (big red 'panic' button), turns off notes, resets controllers and restores initial basic channel configuration.
+	//fluid_synth_system_reset(FluidSynth);
 	return 0;
 }
 
