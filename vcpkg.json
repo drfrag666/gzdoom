@@ -39,9 +39,5 @@
             "name": "libvpx",
             "platform": "!windows"
         },
-        {
-            "name": "libwebp",
-            "platform": "!windows | (windows & static & staticcrt)"
-        }
     ]
 }

@@ -365,6 +365,8 @@ if (HAVE_VULKAN)
 	list( APPEND PROJECT_LIBRARIES "zvulkan" )
 endif()
 
+list( APPEND PROJECT_LIBRARIES "webp" )
+
 # ZMUSIC
 
 if( MSVC )
@@ -419,13 +421,6 @@ if( VPX_FOUND )
 	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} ${VPX_LIBRARIES} )
 else()
 	message( SEND_ERROR "Could not find libvpx" )
-endif()
-
-if (TARGET WebP::webp)
-	list( APPEND PROJECT_LIBRARIES WebP::webp WebP::webpdemux WebP::libwebpmux )
-	if (TARGET WebP::webpdecoder)
-		list( APPEND PROJECT_LIBRARIES WebP::webpdecoder)
-	endif()
 endif()
 
 include_directories( SYSTEM "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${ZMUSIC_INCLUDE_DIR}" "${DRPC_INCLUDE_DIR}")
@@ -1388,6 +1383,7 @@ include_directories(
 	scripting/zscript
 	rendering
 	../libraries/ZVulkan/include
+	../libraries/webp/include
 	${SYSTEM_SOURCES_DIR}
 )
 
