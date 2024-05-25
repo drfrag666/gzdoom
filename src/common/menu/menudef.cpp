@@ -459,7 +459,7 @@ static void DoParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc, bool &s
 						}
 						else if (args[i] == TypeColor)
 						{
-							params.Push(V_GetColor(nullptr, sc));
+							params.Push(V_GetColor(sc));
 						}
 						else if (args[i] == TypeFont)
 						{
@@ -1033,7 +1033,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc, int i
 						}
 						else if (args[i] == TypeColor)
 						{
-							params.Push(V_GetColor(nullptr, sc));
+							params.Push(V_GetColor(sc));
 						}
 						else if (args[i]->isIntCompatible())
 						{
@@ -1279,7 +1279,7 @@ static void ParseImageScrollerBody(FScanner& sc, DImageScrollerDescriptor* desc)
 						}
 						else if (args[i] == TypeColor)
 						{
-							params.Push(V_GetColor(nullptr, sc));
+							params.Push(V_GetColor(sc));
 						}
 						else if (args[i]->isIntCompatible())
 						{

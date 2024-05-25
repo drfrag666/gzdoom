@@ -1226,7 +1226,7 @@ CCMD(idmus)
 	FString map;
 	int l;
 
-	if (!nomusic)
+	if (MusicEnabled())
 	{
 		if (argv.argc() > 1)
 		{

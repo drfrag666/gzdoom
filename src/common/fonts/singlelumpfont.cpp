@@ -151,9 +151,6 @@ FSingleLumpFont::FSingleLumpFont (const char *name, int lump) : FFont(lump)
 			break;
 		}
 	}
-
-	Next = FirstFont;
-	FirstFont = this;
 }
 
 //==========================================================================
@@ -227,7 +224,6 @@ void FSingleLumpFont::LoadFON1 (int lump, const uint8_t *data)
 	FirstChar = 0;
 	LastChar = 255;	// This is to allow LoadTranslations to function. The way this is all set up really needs to be changed.
 	GlobalKerning = 0;
-	translateUntranslated = true;
 	LastChar = 0x2122;
 
 	// Move the Windows-1252 characters to their proper place.
@@ -411,6 +407,7 @@ void FSingleLumpFont::LoadBMF(int lump, const uint8_t *data)
 	count = LastChar - FirstChar + 1;
 	Chars.Resize(count);
 	// BMF palettes are only six bits per component. Fix that.
+	Palette[0] = 0;
 	for (i = 0; i < ActiveColors; ++i)
 	{
 		int r = (data[17 + i * 3] << 2) | (data[17 + i * 3] >> 4);

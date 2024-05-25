@@ -102,6 +102,11 @@ void S_SetMusicCallbacks(MusicCallbacks* cb)
 	if (mus_cb.OpenMusic == nullptr) mus_cb.OpenMusic = DefaultOpenMusic;	// without this we are dead in the water.
 }
 
+int MusicEnabled() // int return is for scripting
+{
+	return mus_enabled && !nomusic;
+} 
+
 //==========================================================================
 //
 // 
@@ -613,23 +618,26 @@ static void CheckReplayGain(const char *musicname, EMidiDevice playertype, const
 	ZMusic_Close(handle);
 
 	GainAnalyzer analyzer;
-	analyzer.InitGainAnalysis(fmt.mSampleRate);
-	int result = analyzer.AnalyzeSamples(lbuffer.Data(), rbuffer.Size() == 0 ? nullptr : rbuffer.Data(), lbuffer.Size(), rbuffer.Size() == 0? 1: 2);
+	int result = analyzer.InitGainAnalysis(fmt.mSampleRate);
 	if (result == GAIN_ANALYSIS_OK)
 	{
-		auto gain = analyzer.GetTitleGain();
-		Printf("Calculated replay gain for %s at %f dB\n", hash.GetChars(), gain);
+		result = analyzer.AnalyzeSamples(lbuffer.Data(), rbuffer.Size() == 0 ? nullptr : rbuffer.Data(), lbuffer.Size(), rbuffer.Size() == 0 ? 1 : 2);
+		if (result == GAIN_ANALYSIS_OK)
+		{
+			auto gain = analyzer.GetTitleGain();
+			Printf("Calculated replay gain for %s at %f dB\n", hash.GetChars(), gain);
 
-		gainMap.Insert(hash, gain);
-		mus_playing.replayGain = gain;
-		mus_playing.replayGainFactor = dBToAmplitude(mus_playing.replayGain + mus_gainoffset);
-		SaveGains();
+			gainMap.Insert(hash, gain);
+			mus_playing.replayGain = gain;
+			mus_playing.replayGainFactor = dBToAmplitude(mus_playing.replayGain + mus_gainoffset);
+			SaveGains();
+		}
 	}
 }
 
 bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 {
-	if (nomusic) return false;	// skip the entire procedure if music is globally disabled.
+	if (!MusicEnabled()) return false;	// skip the entire procedure if music is globally disabled.
 
 	if (!force && PlayList.GetNumSongs())
 	{ // Don't change if a playlist is active
@@ -851,7 +859,7 @@ void S_StopMusic (bool force)
 
 CCMD (changemus)
 {
-	if (!nomusic)
+	if (MusicEnabled())
 	{
 		if (argv.argc() > 1)
 		{

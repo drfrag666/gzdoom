@@ -98,8 +98,7 @@ unsigned FCommandBuffer::CalcCellSize(unsigned length)
 	unsigned cellcount = 0;
 	for (unsigned i = 0; i < length; i++)
 	{
-		int w;
-		NewConsoleFont->GetChar(Text[i], CR_UNTRANSLATED, &w);
+		int w = NewConsoleFont->GetCharWidth(Text[i]);
 		cellcount += w / 9;
 	}
 	return cellcount;
@@ -112,8 +111,7 @@ unsigned FCommandBuffer::CharsForCells(unsigned cellin, bool *overflow)
 	int cells = cellin;
 	while (cells > 0)
 	{
-		int w;
-		NewConsoleFont->GetChar(Text[chars++], CR_UNTRANSLATED, &w);
+		int w = NewConsoleFont->GetCharWidth(Text[chars++]);
 		cells -= w / 9;
 	}
 	*overflow = (cells < 0);
@@ -293,7 +291,7 @@ void FCommandBuffer::AddString(FString clip)
 	if (clip.IsNotEmpty())
 	{
 		// Only paste the first line.
-		long brk = clip.IndexOfAny("\r\n\b");
+		auto brk = clip.IndexOfAny("\r\n\b");
 		std::u32string build;
 		if (brk >= 0)
 		{

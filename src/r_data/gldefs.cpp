@@ -1057,7 +1057,7 @@ class GLDefsParser
 				auto tex = TexMan.GetGameTexture(flump);
 				sc.MustGetStringName(",");
 				sc.MustGetString();
-				PalEntry color = V_GetColor(NULL, sc.String);
+				PalEntry color = V_GetColor(sc.String);
 				//sc.MustGetStringName(",");
 				//sc.MustGetNumber();
 				if (sc.CheckString(","))
@@ -1155,7 +1155,7 @@ class GLDefsParser
 			if (lumpnum != -1)
 			{
 				if (iwad && fileSystem.GetFileContainer(lumpnum) <= fileSystem.GetMaxIwadNum()) useme = true;
-				if (thiswad && fileSystem.GetFileContainer(lumpnum) == workingLump) useme = true;
+				if (thiswad && fileSystem.GetFileContainer(lumpnum) == fileSystem.GetFileContainer(workingLump)) useme = true;
 			}
 			if (!useme) return;
 		}
@@ -1337,7 +1337,7 @@ class GLDefsParser
 			if (lumpnum != -1)
 			{
 				if (iwad && fileSystem.GetFileContainer(lumpnum) <= fileSystem.GetMaxIwadNum()) useme = true;
-				if (thiswad && fileSystem.GetFileContainer(lumpnum) == workingLump) useme = true;
+				if (thiswad && fileSystem.GetFileContainer(lumpnum) == fileSystem.GetFileContainer(workingLump)) useme = true;
 			}
 			if (!useme) return;
 		}
@@ -1671,12 +1671,12 @@ class GLDefsParser
 			else if (sc.Compare("AddColor"))
 			{
 				sc.MustGetString();
-				tm.AddColor = (tm.AddColor & 0xff000000) | (V_GetColor(NULL, sc) & 0xffffff);
+				tm.AddColor = (tm.AddColor & 0xff000000) | (V_GetColor(sc) & 0xffffff);
 			}
 			else if (sc.Compare("ModulateColor"))
 			{
 				sc.MustGetString();
-				tm.ModulateColor = V_GetColor(NULL, sc) & 0xffffff;
+				tm.ModulateColor = V_GetColor(sc) & 0xffffff;
 				if (sc.CheckToken(','))
 				{
 					sc.MustGetNumber();
@@ -1687,7 +1687,7 @@ class GLDefsParser
 			else if (sc.Compare("BlendColor"))
 			{
 				sc.MustGetString();
-				tm.BlendColor = V_GetColor(NULL, sc) & 0xffffff;
+				tm.BlendColor = V_GetColor(sc) & 0xffffff;
 				sc.MustGetToken(',');
 				sc.MustGetString();
 				static const char* opts[] = { "none", "alpha", "screen", "overlay", "hardlight", nullptr };

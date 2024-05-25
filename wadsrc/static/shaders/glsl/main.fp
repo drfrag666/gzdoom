@@ -1,4 +1,5 @@
 
+
 layout(location = 0) in vec4 vTexCoord;
 layout(location = 1) in vec4 vColor;
 layout(location = 2) in vec4 pixelpos;
@@ -165,7 +166,7 @@ vec4 getTexel(vec2 st)
 	//
 	// Apply texture modes
 	//
-	switch (uTextureMode & 0xffff)
+	switch (uTextureMode & 0xfff)
 	{
 		case 1:	// TM_STENCIL
 			texel.rgb = vec3(1.0,1.0,1.0);
@@ -186,13 +187,6 @@ vec4 getTexel(vec2 st)
 			break;
 		}
 			
-		case 5:	// TM_CLAMPY
-			if (st.t < 0.0 || st.t > 1.0)
-			{
-				texel.a = 0.0;
-			}
-			break;
-			
 		case 6: // TM_OPAQUEINVERSE
 			texel = vec4(1.0-texel.r, 1.0-texel.b, 1.0-texel.g, 1.0);
 			break;
@@ -200,6 +194,13 @@ vec4 getTexel(vec2 st)
 		case 7: //TM_FOGLAYER 
 			return texel;
 
+	}
+	if ((uTextureMode & 0x1000) != 0) // TM_CLAMPY
+	{
+		if (st.t < 0.0 || st.t > 1.0)
+		{
+			texel.a = 0.0;
+		}
 	}
 	
 	// Apply the texture modification colors.
@@ -564,7 +565,7 @@ void SetMaterialProps(inout Material material, vec2 texCoord)
 // OpenGL doesn't care, but Vulkan pukes all over the place if these texture samplings are included in no-texture shaders, even though never called.
 #ifndef NO_LAYERS
 	if ((uTextureMode & TEXF_Brightmap) != 0)
-		material.Bright = texture(brighttexture, texCoord.st);
+		material.Bright = desaturate(texture(brighttexture, texCoord.st));
 		
 	if ((uTextureMode & TEXF_Detailmap) != 0)
 	{
@@ -573,7 +574,7 @@ void SetMaterialProps(inout Material material, vec2 texCoord)
 	}
 	
 	if ((uTextureMode & TEXF_Glowmap) != 0)
-		material.Glow = texture(glowtexture, texCoord.st);
+		material.Glow = desaturate(texture(glowtexture, texCoord.st));
 #endif
 }
 
@@ -628,7 +629,7 @@ vec4 getLightColor(Material material, float fogdist, float fogfactor)
 	color = min(color, 1.0);
 
 	// these cannot be safely applied by the legacy format where the implementation cannot guarantee that the values are set.
-#ifndef LEGACY_USER_SHADER
+#if !defined LEGACY_USER_SHADER && !defined NO_LAYERS
 	//
 	// apply glow 
 	//

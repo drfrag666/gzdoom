@@ -209,6 +209,7 @@ ListMenu "EpisodeMenu"
 	{
 		Position 48, 63
 		StaticPatch 54, 38, "M_EPISOD", 0 , "$MNU_EPISODE"
+		linespacing 16
 	}
 	IfGame(Strife)
 	{
@@ -234,6 +235,7 @@ ListMenu "SkillMenu"
 	IfGame(Doom, Chex)
 	{
 		StaticPatch 96, 14, "M_NEWG", 0, "$MNU_NEWGAME"
+		linespacing 16
 	}
 	IfGame(Strife)
 	{
@@ -946,6 +948,9 @@ OptionMenu "VideoOptions" protected
 	Slider "$DSPLYMNU_CONTRAST",				"vid_contrast",	   				0.1, 3.0, 0.1
 	Slider "$DSPLYMNU_SATURATION",				"vid_saturation",  				-3.0, 3.0, 0.25, 2
 	StaticText " "
+	Slider "$DSPLYMNU_FOV",						"fov",							75.0, 120.0, 0.1, 1
+	StaticText " "
+
 	Option "$DSPLYMNU_VSYNC",					"vid_vsync", "OnOff"
 	Option "$VIDMNU_MAXFPS",					"vid_maxfps", "MaxFps"
 	Option "$DSPLYMNU_CAPFPS",					"cl_capfps", "OffOn"
@@ -2653,7 +2658,7 @@ OptionMenu "OpenGLOptions" protected
 	Option "$GLPREFMNU_SPRBILLBOARD",			gl_billboard_mode,				"BillboardModes"
 	Option "$GLPREFMNU_SPRBILLFACECAMERA",		gl_billboard_faces_camera,		"OnOff"
 	Option "$GLPREFMNU_PARTICLESTYLE",			gl_particles_style,				"Particles"
-	Option "$GLPREFMNU_RENDERQUALITY",			gl_render_precise,				"Precision"
+	Option "$GLPREFMNU_RENDERQUALITY",			gl_seamless,					"Precision"
 	StaticText " "
 	Slider "$GLPREFMNU_MENUBLUR",				gl_menu_blur, 0, 5.0, 0.5, 2
 	StaticText " "
