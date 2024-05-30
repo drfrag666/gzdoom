@@ -344,6 +344,10 @@ static void DoParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc, bool &s
 		{
 			desc->mAnimatedTransition = true;
 		}
+		else if (sc.Compare("animated"))
+		{
+			desc->mAnimated = true;
+		}
 		else if (sc.Compare("MouseWindow"))
 		{
 			sc.MustGetNumber();
@@ -1216,6 +1220,10 @@ static void ParseImageScrollerBody(FScanner& sc, DImageScrollerDescriptor* desc)
 		else if (sc.Compare("animatedtransition"))
 		{
 			desc->mAnimatedTransition = true;
+		}
+		else if (sc.Compare("animated"))
+		{
+			desc->mAnimated = true;
 		}
 		else if (sc.Compare("textBackground"))
 		{

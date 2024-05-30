@@ -142,6 +142,7 @@ public:
 	FFont *textFont;
 	double textScale;
 	bool mAnimatedTransition;
+	bool mAnimated;
 	int virtWidth, virtHeight;
 
 };

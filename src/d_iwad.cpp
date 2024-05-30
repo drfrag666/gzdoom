@@ -264,7 +264,7 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 // Look for IWAD definition lump
 //
 //==========================================================================
-extern const char* iwad_folders[13];
+extern const char* iwad_folders[14];
 extern const char* iwad_reserved[12];
 
 FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
@@ -420,6 +420,7 @@ void FIWadManager::CollectSearchPaths()
 	}
 	mSearchPaths.Append(I_GetGogPaths());
 	mSearchPaths.Append(I_GetSteamPath());
+	mSearchPaths.Append(I_GetBethesdaPath());
 
 	// Unify and remove trailing slashes
 	for (auto &str : mSearchPaths)

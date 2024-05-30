@@ -46,10 +46,13 @@
 
 #include "hardware.h"
 #include "gl_sysfb.h"
-
 #include "gl_system.h"
+
 #include "gl_renderer.h"
 #include "gl_framebuffer.h"
+#ifdef HAVE_GLES2
+#include "gles_framebuffer.h"
+#endif
 
 #ifdef HAVE_VULKAN
 #include "vulkan/system/vk_framebuffer.h"
@@ -145,6 +148,8 @@ namespace Priv
 		{
 			// Enforce minimum size limit
 			SDL_SetWindowMinimumSize(Priv::window, VID_MIN_WIDTH, VID_MIN_HEIGHT);
+			// Tell SDL to start sending text input on Wayland.
+			if (strncasecmp(SDL_GetCurrentVideoDriver(), "wayland", 7) == 0) SDL_StartTextInput();
 		}
 	}
 
@@ -459,7 +464,12 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer ()
 
 	if (fb == nullptr)
 	{
-		fb = new OpenGLRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
+#ifdef HAVE_GLES2
+		if( (Args->CheckParm ("-gles2_renderer")) || (vid_preferbackend == 3) )
+			fb = new OpenGLESRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
+		else
+#endif
+			fb = new OpenGLRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
 		if (fb == nullptr)
 		{
 			I_FatalError ("Failed to initialize OpenGL framebuffer");
