@@ -44,7 +44,7 @@
 #include "texturemanager.h"
 #include "m_random.h"
 #include "v_font.h"
-#include "templates.h"
+
 #include "actor.h"
 #include "p_lnspec.h"
 #include "g_levellocals.h"
@@ -521,7 +521,6 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 	unsigned i = 0;
 
 	// Call the BuiltinCallLineSpecial function to perform the desired special.
-	static uint8_t reginfo[] = { REGT_INT, REGT_POINTER, REGT_INT, REGT_INT, REGT_INT, REGT_INT, REGT_INT };
 	auto sym = FindBuiltinFunction(NAME_BuiltinCallLineSpecial);
 
 	assert(sym);

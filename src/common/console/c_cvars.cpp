@@ -334,6 +334,7 @@ UCVarValue FBaseCVar::FromBool (bool value, ECVarType type)
 		break;
 
 	default:
+		ret.Int = 0;
 		break;
 	}
 
@@ -364,6 +365,7 @@ UCVarValue FBaseCVar::FromInt (int value, ECVarType type)
 		break;
 
 	default:
+		ret.Int = 0;
 		break;
 	}
 
@@ -396,6 +398,7 @@ UCVarValue FBaseCVar::FromFloat (float value, ECVarType type)
 		break;
 
 	default:
+		ret.Int = 0;
 		break;
 	}
 
@@ -457,6 +460,7 @@ UCVarValue FBaseCVar::FromString (const char *value, ECVarType type)
 		break;
 
 	default:
+		ret.Int = 0;
 		break;
 	}
 
@@ -1427,12 +1431,12 @@ void C_ArchiveCVars (FConfigFile *f, uint32_t filter)
 		cvar = cvar->m_Next;
 	}
 	qsort(cvarlist.Data(), cvarlist.Size(), sizeof(FBaseCVar*), cvarcmp);
-	for (auto cvar : cvarlist)
+	for (auto cv : cvarlist)
 	{
-		const char* const value = (cvar->Flags & CVAR_ISDEFAULT)
-			? cvar->GetGenericRep(CVAR_String).String
-			: cvar->SafeValue.GetChars();
-		f->SetValueForKey(cvar->GetName(), value);
+		const char* const value = (cv->Flags & CVAR_ISDEFAULT)
+			? cv->GetGenericRep(CVAR_String).String
+			: cv->SafeValue.GetChars();
+		f->SetValueForKey(cv->GetName(), value);
 	}
 }
 
@@ -1644,7 +1648,6 @@ CCMD (archivecvar)
 void C_ListCVarsWithoutDescription()
 {
 	FBaseCVar* var = CVars;
-	int count = 0;
 
 	while (var)
 	{

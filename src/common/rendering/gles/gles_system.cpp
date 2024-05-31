@@ -32,6 +32,10 @@ static void* LoadGLES2Proc(const char* name)
 		{
 			glesLib = dlopen("libGLESv2.so", flags);
 		}
+		if(!glesLib)
+		{
+			glesLib = dlopen("libGLESv2.so.2", flags);
+		}
 	}
 
 	void * ret = NULL;
@@ -58,15 +62,15 @@ static PROC(WINAPI* getprocaddress)(LPCSTR name);
 
 static void* LoadGLES2Proc(const char* name)
 {
-
 	HINSTANCE hGetProcIDDLL = LoadLibraryA("libGLESv2.dll");
-	
+
 	int error =	GetLastError();
 
 	void* addr = GetProcAddress(hGetProcIDDLL, name);
 	if (!addr)
 	{
 		//exit(1);
+		return nullptr;
 	}
 	else
 	{
@@ -165,25 +169,27 @@ namespace OpenGLESRenderer
 
 		gles.modelstring = (char*)glGetString(GL_RENDERER);
 		gles.vendorstring = (char*)glGetString(GL_VENDOR);
-	
+
 		gl_customshader = false;
 
 		GLint maxTextureSize[1];
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, maxTextureSize);
 
 		gles.max_texturesize = maxTextureSize[0];
-		
+
 		Printf("GL_MAX_TEXTURE_SIZE: %d\n", gles.max_texturesize);
 
 #if USE_GLES2
 		gles.depthStencilAvailable = CheckExtension("GL_OES_packed_depth_stencil");
 		gles.npotAvailable = CheckExtension("GL_OES_texture_npot");
+		gles.depthClampAvailable = CheckExtension("GL_EXT_depth_clamp");
 #else
 		gles.depthStencilAvailable = true;
 		gles.npotAvailable = true;
 		gles.useMappedBuffers = true;
+		gles.depthClampAvailable = true;
 #endif
-		
+
 		gles.numlightvectors = (gles.maxlights * LIGHT_VEC4_NUM);
 	}
 }

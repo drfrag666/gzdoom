@@ -44,7 +44,7 @@
 #include <stddef.h>
 
 #include "doomtype.h"
-#include "templates.h"
+
 #include "doomstat.h"
 #include "info.h"
 #include "d_dehacked.h"
@@ -184,7 +184,7 @@ struct MBFParamState
 	int GetSoundArg(int i, int def = 0)
 	{
 		int num = argsused & (1 << i) ? (int)args[i] : def;
-		if (num > 0 && num < int(SoundMap.Size())) return SoundMap[num];
+		if (num > 0 && num <= int(SoundMap.Size())) return SoundMap[num-1];
 		return 0;
 	}
 
@@ -237,6 +237,7 @@ static AmmoPerAttack AmmoPerAttacks[] = {
 	{ NAME_A_FireBFG, -1},	// uses deh.BFGCells
 	{ NAME_A_FireOldBFG, 1},
 	{ NAME_A_FireRailgun, 1},
+	{ NAME_A_ConsumeAmmo, 1}, // MBF21
 	{ NAME_None, 0}
 };
 
@@ -764,22 +765,6 @@ static void CreateLineEffectFunc(FunctionCallEmitter &emitters, int value1, int 
 	emitters.AddParameterIntConst(value2);		// tag
 }
 
-// No misc, but it's basically A_Explode with an added effect
-static void CreateNailBombFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
-{ // A_Explode
-	// This one does not actually have MBF-style parameters. But since
-	// we're aliasing it to an extension of A_Explode...
-	emitters.AddParameterIntConst(-1);		// damage
-	emitters.AddParameterIntConst(-1);		// distance
-	emitters.AddParameterIntConst(1);		// flags (1=XF_HURTSOURCE)
-	emitters.AddParameterIntConst(0);		// alert
-	emitters.AddParameterIntConst(0);		// fulldamagedistance
-	emitters.AddParameterIntConst(30);		// nails
-	emitters.AddParameterIntConst(10);		// naildamage
-	emitters.AddParameterPointerConst(PClass::FindClass(NAME_BulletPuff));	// itemtype
-	emitters.AddParameterIntConst(NAME_None);	// damage type
-}
-
 static void CreateSpawnObjectFunc(FunctionCallEmitter& emitters, int value1, int value2, MBFParamState* state)
 {
 	state->ValidateArgCount(8, "A_SpawnObject");
@@ -902,12 +887,12 @@ static void CreateWeaponBulletAttackFunc(FunctionCallEmitter &emitters, int valu
 
 static void CreateWeaponMeleeAttackFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
 {
-	state->ValidateArgCount(5, "A_WeaponBulletAttack");
+	state->ValidateArgCount(5, "A_WeaponMeleeAttack");
 	emitters.AddParameterIntConst(state->GetIntArg(0, 2));
 	emitters.AddParameterIntConst(state->GetIntArg(1, 10));
 	emitters.AddParameterFloatConst(state->GetFloatArg(2, 1));
-	emitters.AddParameterIntConst(state->GetIntArg(3));
-	emitters.AddParameterIntConst(state->GetIntArg(4));
+	emitters.AddParameterIntConst(state->GetSoundArg(3));
+	emitters.AddParameterFloatConst(state->GetFloatArg(4));
 }
 
 static void CreateWeaponSoundFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
@@ -936,7 +921,6 @@ static void (*MBFCodePointerFactories[])(FunctionCallEmitter&, int, int, MBFPara
 {
 	// Die and Detonate are not in this list because these codepointers have
 	// no dehacked arguments and therefore do not need special handling.
-	// NailBomb has no argument but is implemented as new parameters for A_Explode.
 	CreateMushroomFunc,
 	CreateSpawnFunc,
 	CreateTurnFunc,
@@ -945,7 +929,6 @@ static void (*MBFCodePointerFactories[])(FunctionCallEmitter&, int, int, MBFPara
 	CreatePlaySoundFunc,
 	CreateRandomJumpFunc,
 	CreateLineEffectFunc,
-	CreateNailBombFunc,
 	CreateSpawnObjectFunc,
 	CreateMonsterProjectileFunc,
 	CreateMonsterBulletAttackFunc,
@@ -2077,60 +2060,54 @@ static int PatchWeapon (int weapNum)
 	{
 		int val = atoi (Line2);
 
-		if (strlen (Line1) >= 9)
+		size_t len = strlen(Line1);
+		if (len > 6 && stricmp (Line1 + len - 6, " frame") == 0)
 		{
-			if (stricmp (Line1 + strlen (Line1) - 6, " frame") == 0)
+			FState *state = FindState (val);
+
+			if (type != nullptr && !patchedStates)
 			{
-				FState *state = FindState (val);
-
-				if (type != NULL && !patchedStates)
-				{
-					statedef.MakeStateDefines(type);
-					patchedStates = true;
-				}
-
-				if (strnicmp (Line1, "Deselect", 8) == 0)
-					statedef.SetStateLabel("Select", state);
-				else if (strnicmp (Line1, "Select", 6) == 0)
-					statedef.SetStateLabel("Deselect", state);
-				else if (strnicmp (Line1, "Bobbing", 7) == 0)
-					statedef.SetStateLabel("Ready", state);
-				else if (strnicmp (Line1, "Shooting", 8) == 0)
-					statedef.SetStateLabel("Fire", state);
-				else if (strnicmp (Line1, "Firing", 6) == 0)
-					statedef.SetStateLabel("Flash", state);
+				statedef.MakeStateDefines(type);
+				patchedStates = true;
 			}
-			else if (stricmp (Line1, "Ammo type") == 0)
+
+			if (strnicmp (Line1, "Deselect", 8) == 0)
+				statedef.SetStateLabel("Select", state);
+			else if (strnicmp (Line1, "Select", 6) == 0)
+				statedef.SetStateLabel("Deselect", state);
+			else if (strnicmp (Line1, "Bobbing", 7) == 0)
+				statedef.SetStateLabel("Ready", state);
+			else if (strnicmp (Line1, "Shooting", 8) == 0)
+				statedef.SetStateLabel("Fire", state);
+			else if (strnicmp (Line1, "Firing", 6) == 0)
+				statedef.SetStateLabel("Flash", state);
+		}
+		else if (stricmp (Line1, "Ammo type") == 0)
+		{
+			if (val < 0 || val >= 12 || (unsigned)val >= AmmoNames.Size())
 			{
-				if (val < 0 || val >= 12 || (unsigned)val >= AmmoNames.Size())
+				val = 5;
+			}
+			if (info)
+			{
+				auto &AmmoType = info->PointerVar<PClassActor>(NAME_AmmoType1);
+				AmmoType = AmmoNames[val];
+				if (AmmoType != nullptr)
 				{
-					val = 5;
-				}
-				if (info)
-				{
-					auto &AmmoType = info->PointerVar<PClassActor>(NAME_AmmoType1);
-					AmmoType = AmmoNames[val];
-					if (AmmoType != nullptr)
+					info->IntVar(NAME_AmmoGive1) = GetDefaultByType(AmmoType)->IntVar(NAME_Amount) * 2;
+					auto &AmmoUse = info->IntVar(NAME_AmmoUse1);
+					if (AmmoUse == 0)
 					{
-						info->IntVar(NAME_AmmoGive1) = GetDefaultByType(AmmoType)->IntVar(NAME_Amount) * 2;
-						auto &AmmoUse = info->IntVar(NAME_AmmoUse1);
-						if (AmmoUse == 0)
-						{
-							AmmoUse = 1;
-						}
+						AmmoUse = 1;
 					}
 				}
-			}
-			else
-			{
-				Printf (unknown_str, Line1, "Weapon", weapNum);
 			}
 		}
 		else if (stricmp (Line1, "Decal") == 0)
 		{
 			stripwhite (Line2);
 			const FDecalTemplate *decal = DecalLibrary.GetDecalByName (Line2);
-			if (decal != NULL)
+			if (decal != nullptr)
 			{
 				if (info) info->DecalGenerator = const_cast <FDecalTemplate *>(decal);
 			}

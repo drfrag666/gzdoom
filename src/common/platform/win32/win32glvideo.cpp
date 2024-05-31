@@ -40,7 +40,7 @@
 
 #include "gl_sysfb.h"
 #include "hardware.h"
-#include "templates.h"
+
 #include "version.h"
 #include "c_console.h"
 #include "v_video.h"
@@ -425,8 +425,6 @@ bool Win32GLVideo::InitHardware(HWND Window, int multisample)
 	}
 
 	int prof = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
-	const char *version = Args->CheckValue("-glversion");
-
 
 	for (; prof <= WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB; prof++)
 	{

@@ -34,7 +34,7 @@
 */
 
 #include "gles_system.h"
-#include "templates.h"
+
 #include "c_cvars.h"
 #include "hw_material.h"
 
@@ -81,12 +81,11 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 	int texformat = GL_RGBA;// TexFormat[gl_texture_format];
 	bool deletebuffer=false;
 
-	/*
-	if (forcenocompression)
-	{
-		texformat = GL_RGBA8;
-	}
-	*/
+	// When running in SW mode buffer will be null, so set it to the texBuffer already created
+	// There could be other use cases I do not know about which means this is a bad idea..
+	if (buffer == nullptr)
+		buffer = texBuffer;
+
 	bool firstCall = glTexID == 0;
 	if (firstCall)
 	{
@@ -133,13 +132,42 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 
 
 #if USE_GLES2
-	sourcetype = GL_BGRA;
-	texformat = GL_BGRA;
+	if (glTextureBytes == 1)
+	{
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		sourcetype = GL_ALPHA;
+		texformat = GL_ALPHA;
+	}
+	else
+	{
+		sourcetype = GL_BGRA;
+		texformat = GL_BGRA;
+	}
 #else
-	sourcetype = GL_BGRA;
-	texformat = GL_RGBA;
+	if (glTextureBytes == 1)
+	{
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		sourcetype = GL_RED;
+		texformat = GL_RED;
+	}
+	else
+	{
+		sourcetype = GL_BGRA;
+		texformat = GL_RGBA;
+	}
 #endif
+
 	glTexImage2D(GL_TEXTURE_2D, 0, texformat, rw, rh, 0, sourcetype, GL_UNSIGNED_BYTE, buffer);
+
+#if !(USE_GLES2)
+	// The shader is using the alpha channel instead of red, this work on GLES but not on GL
+	// So the texture uses GL_RED and this swizzels the red channel into the alpha channel
+	if (glTextureBytes == 1)
+	{
+		GLint swizzleMask[] = { GL_ZERO, GL_ZERO, GL_ZERO, GL_RED };
+		glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+	}
+#endif
 
 	if (deletebuffer && buffer) free(buffer);
 
@@ -148,13 +176,30 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 		glGenerateMipmap(GL_TEXTURE_2D);
 		mipmapped = true;
 	}
-	
+
 	if (texunit > 0) glActiveTexture(GL_TEXTURE0);
 	else if (texunit == -1) glBindTexture(GL_TEXTURE_2D, textureBinding);
 	return glTexID;
 }
 
 
+void FHardwareTexture::AllocateBuffer(int w, int h, int texelsize) 
+{	
+	if (texelsize < 1 || texelsize > 4) texelsize = 4;
+	glTextureBytes = texelsize;
+	bufferpitch = w;
+
+	if (texBuffer)
+		delete[] texBuffer;
+
+	texBuffer = new uint8_t[(w * h) * texelsize];
+	return;
+}
+
+uint8_t* FHardwareTexture::MapBuffer()
+{
+	return texBuffer;
+}
 
 //===========================================================================
 // 
@@ -164,6 +209,9 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 FHardwareTexture::~FHardwareTexture() 
 { 
 	if (glTexID != 0) glDeleteTextures(1, &glTexID);
+
+	if (texBuffer)
+		delete[] texBuffer;
 }
 
 
@@ -255,8 +303,6 @@ void FHardwareTexture::BindToFrameBuffer(int width, int height)
 
 bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, int translation, int flags)
 {
-	int usebright = false;
-
 	bool needmipmap = (clampmode <= CLAMP_XY) && !forcenofilter;
 
 	// Bind it to the system.
@@ -271,7 +317,7 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 		int w = 0, h = 0;
 
 		// Create this texture
-		
+
 		FTextureBuffer texbuffer;
 
 		if (!tex->isHardwareCanvas())

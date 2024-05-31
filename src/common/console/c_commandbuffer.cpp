@@ -144,7 +144,7 @@ void FCommandBuffer::MakeStartPosGood()
 	{ // The cursor is in front of the visible part of the line
 		n = CursorPosCells;
 	}
-	StartPosCells = std::max(0, n);
+	StartPosCells = max(0, n);
 	bool overflow;
 	StartPos = CharsForCells(StartPosCells, &overflow);
 	if (overflow)
@@ -299,7 +299,7 @@ void FCommandBuffer::AddString(FString clip)
 		}
 		auto strp = (const uint8_t*)clip.GetChars();
 		while (auto chr = GetCharFromString(strp)) build += chr;
-		
+
 		if (Text.length() == 0)
 		{
 			Text = build;

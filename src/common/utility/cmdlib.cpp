@@ -252,7 +252,7 @@ bool GetFileInfo(const char* pathname, size_t *size, time_t *time)
 	bool res = my_wstat64(wstr.c_str(), &info) == 0;
 #endif
 	if (!res || (info.st_mode & S_IFDIR)) return false;
-	if (size) *size = info.st_size;
+	if (size) *size = (size_t)info.st_size;
 	if (time) *time = info.st_mtime;
 	return res;
 }
@@ -363,7 +363,7 @@ FString StripExtension(const char* path)
 	src = path + strlen(path) - 1;
 
 	//
-	// back up until a . and abort on a \
+	// back up until a . and abort on a '/'
 	//
 	while (src != path && !IsSeperator(*(src - 1)))
 	{
@@ -561,7 +561,7 @@ void CreatePath(const char *fn)
 void CreatePath(const char *fn)
 {
 	char *copy, *p;
- 
+
 	if (fn[0] == '/' && fn[1] == '\0')
 	{
 		return;
@@ -870,6 +870,10 @@ FString ExpandEnvVars(const char *searchpathstring)
 FString NicePath(const char *path)
 {
 #ifdef _WIN32
+	if (*path == '\0')
+	{
+		return FString(".");
+	}
 	return ExpandEnvVars(path);
 #else
 	if (path == NULL || *path == '\0')
@@ -1064,7 +1068,7 @@ void md5Update(FileReader& file, MD5Context& md5, unsigned len)
 
 	while (len > 0)
 	{
-		t = std::min<unsigned>(len, sizeof(readbuf));
+		t = min<unsigned>(len, sizeof(readbuf));
 		len -= t;
 		t = (long)file.Read(readbuf, t);
 		md5.Update(readbuf, t);

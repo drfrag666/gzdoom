@@ -31,7 +31,7 @@
 #define __R_DEFS_H__
 
 #include "doomdef.h"
-#include "templates.h"
+
 #include "m_bbox.h"
 #include "dobjgc.h"
 #include "r_data/r_translate.h"
@@ -58,6 +58,8 @@ struct sector_t;
 class AActor;
 struct FSection;
 struct FLevelLocals;
+struct LightmapSurface;
+struct LightProbe;
 
 const uint16_t NO_INDEX = 0xffffu;
 const uint32_t NO_SIDE = 0xffffffffu;
@@ -707,6 +709,8 @@ struct sector_t
 	int				vbocount[2];	// Total count of vertices belonging to this sector's planes. This is used when a sector height changes and also contains all attached planes.
 	int				ibocount;		// number of indices per plane (identical for all planes.) If this is -1 the index buffer is not in use.
 
+	bool HasLightmaps = false;		// Sector has lightmaps, each subsector vertex needs its own unique lightmap UV data
+
 	// Below are all properties which are not used by the renderer.
 
 	TObjPtr<AActor*> SoundTarget;
@@ -781,7 +785,6 @@ public:
 
 	bool IsLinked(sector_t *other, bool ceiling) const;
 
-	sector_t *NextSpecialSector (int type, sector_t *prev) const;		// [RH]
 	void RemoveForceField();
 	int Index() const { return sectornum; }
 
@@ -1216,6 +1219,7 @@ struct side_t
 	uint16_t	Flags;
 	int			UDMFIndex;		// needed to access custom UDMF fields which are stored in loading order.
 	FLightNode * lighthead;		// all dynamic lights that may affect this wall
+	LightmapSurface* lightmap;
 	seg_t **segs;	// all segs belonging to this sidedef in ascending order. Used for precise rendering
 	int numsegs;
 	int sidenum;
@@ -1615,6 +1619,8 @@ struct subsector_t
 	int Index() const { return subsectornum; }
 									// 2: has one-sided walls
 	FPortalCoverage	portalcoverage[2];
+
+	LightmapSurface *lightmap[2];
 };
 
 
@@ -1657,6 +1663,40 @@ struct FMiniBSP
 	TArray<seg_t> Segs;
 	TArray<subsector_t> Subsectors;
 	TArray<vertex_t> Verts;
+};
+
+// Lightmap data
+
+enum SurfaceType
+{
+	ST_NULL,
+	ST_MIDDLEWALL,
+	ST_UPPERWALL,
+	ST_LOWERWALL,
+	ST_CEILING,
+	ST_FLOOR
+};
+
+struct LightmapSurface
+{
+	SurfaceType Type;
+	subsector_t *Subsector;
+	side_t *Side;
+	sector_t *ControlSector;
+	uint32_t LightmapNum;
+	float *TexCoords;
+};
+
+struct LightProbe
+{
+	float X, Y, Z;
+	float Red, Green, Blue;
+};
+
+struct LightProbeCell
+{
+	LightProbe* FirstProbe = nullptr;
+	int NumProbes = 0;
 };
 
 //
@@ -1726,6 +1766,8 @@ int GetCeilingLight(const sector_t *);
 double GetFriction(const sector_t *self, int plane, double *movefac);
 double HighestCeilingAt(sector_t *sec, double x, double y, sector_t **resultsec = nullptr);
 double LowestFloorAt(sector_t *sec, double x, double y, sector_t **resultsec = nullptr);
+sector_t* P_NextSpecialSector(sector_t* sect, int type, sector_t* prev);
+sector_t* P_NextSpecialSectorVC(sector_t* sect, int type); // uses validcount
 
 inline void sector_t::RemoveForceField() { return ::RemoveForceField(this); }
 inline bool sector_t::PlaneMoving(int pos) { return !!::PlaneMoving(this, pos); }

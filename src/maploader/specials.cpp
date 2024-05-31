@@ -67,7 +67,7 @@
 
 #include <stdlib.h>
 
-#include "templates.h"
+
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
@@ -452,7 +452,7 @@ static void SetupSectorDamage(sector_t *sector, int damage, int interval, int le
 	if (sector->damageamount == 0 && !(sector->Flags & (SECF_EXIT1|SECF_EXIT2)))
 	{
 		sector->damageamount = damage;
-		sector->damageinterval = MAX(1, interval);
+		sector->damageinterval = max(1, interval);
 		sector->leakydamage = leakchance;
 		sector->damagetype = type;
 		sector->Flags = (sector->Flags & ~SECF_DAMAGEFLAGS) | (flags & SECF_DAMAGEFLAGS);
@@ -1414,9 +1414,9 @@ void MapLoader::SpawnScrollers()
 			else
 			{
 				auto it = Level->GetLineIdIterator(l->args[1]);
-				while (int ln = it.Next())
+				while ((s = it.Next()) >= 0)
 				{
-					Level->CreateThinker<DScroller>(EScroll::sc_side, dx, dy, control, nullptr, Level->lines[ln].sidedef[0], accel, SCROLLTYPE(l->args[0]));
+					Level->CreateThinker<DScroller>(EScroll::sc_side, dx, dy, control, nullptr, Level->lines[s].sidedef[0], accel, SCROLLTYPE(l->args[0]));
 				}
 			}
 			break;

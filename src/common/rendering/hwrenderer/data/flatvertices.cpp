@@ -81,7 +81,7 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height, int pipelineNbr):
 
 	mIndexBuffer = screen->CreateIndexBuffer();
 	int data[4] = {};
-	mIndexBuffer->SetData(4, data); // On Vulkan this may not be empty, so set some dummy defaults to avoid crashes.
+	mIndexBuffer->SetData(4, data, BufferUsageType::Static); // On Vulkan this may not be empty, so set some dummy defaults to avoid crashes.
 
 
 	for (int n = 0; n < mPipelineNbr; n++)
@@ -89,14 +89,15 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height, int pipelineNbr):
 		mVertexBufferPipeline[n] = screen->CreateVertexBuffer();
 
 		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
-		mVertexBufferPipeline[n]->SetData(bytesize, nullptr, false);
+		mVertexBufferPipeline[n]->SetData(bytesize, nullptr, BufferUsageType::Persistent);
 
 		static const FVertexBufferAttribute format[] = {
 			{ 0, VATTR_VERTEX, VFmt_Float3, (int)myoffsetof(FFlatVertex, x) },
-			{ 0, VATTR_TEXCOORD, VFmt_Float2, (int)myoffsetof(FFlatVertex, u) }
+			{ 0, VATTR_TEXCOORD, VFmt_Float2, (int)myoffsetof(FFlatVertex, u) },
+			{ 0, VATTR_LIGHTMAP, VFmt_Float3, (int)myoffsetof(FFlatVertex, lu) },
 		};
 
-		mVertexBufferPipeline[n]->SetFormat(1, 2, sizeof(FFlatVertex), format);
+		mVertexBufferPipeline[n]->SetFormat(1, 3, sizeof(FFlatVertex), format);
 	}
 
 	mVertexBuffer = mVertexBufferPipeline[mPipelinePos];
@@ -149,7 +150,6 @@ std::pair<FFlatVertex *, unsigned int> FFlatVertexBuffer::AllocVertices(unsigned
 {
 	FFlatVertex *p = GetBuffer();
 	auto index = mCurIndex.fetch_add(count);
-	auto offset = index;
 	if (index + count >= BUFFER_SIZE_TO_USE)
 	{
 		// If a single scene needs 2'000'000 vertices there must be something very wrong. 

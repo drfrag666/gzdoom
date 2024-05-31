@@ -29,7 +29,7 @@
 #include <memory>
 
 #include "i_time.h"
-#include "templates.h"
+
 #include "version.h"
 #include "doomdef.h" 
 #include "doomstat.h"
@@ -838,7 +838,7 @@ void G_AddViewPitch (int look, bool mouse)
 		}
 		else
 		{
-			LocalViewPitch = MIN(LocalViewPitch + look, 0x78000000);
+			LocalViewPitch = min(LocalViewPitch + look, 0x78000000);
 		}
 	}
 	else if (look < 0)
@@ -850,7 +850,7 @@ void G_AddViewPitch (int look, bool mouse)
 		}
 		else
 		{
-			LocalViewPitch = MAX(LocalViewPitch + look, -0x78000000);
+			LocalViewPitch = max(LocalViewPitch + look, -0x78000000);
 		}
 	}
 	if (look != 0)
@@ -3143,3 +3143,4 @@ DEFINE_GLOBAL(demoplayback)
 DEFINE_GLOBAL(automapactive);
 DEFINE_GLOBAL(Net_Arbitrator);
 DEFINE_GLOBAL(netgame);
+DEFINE_GLOBAL(paused);

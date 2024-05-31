@@ -60,9 +60,9 @@ FSamplerManager::~FSamplerManager()
 
 void FSamplerManager::UnbindAll()
 {
-	
+
 }
-	
+
 uint8_t FSamplerManager::Bind(int texunit, int num, int lastval)
 {
 
@@ -119,8 +119,26 @@ uint8_t FSamplerManager::Bind(int texunit, int num, int lastval)
 		break;
 
 	case CLAMP_NOFILTER:
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		break;
+
 	case CLAMP_NOFILTER_X:
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		break;
+
 	case CLAMP_NOFILTER_Y:
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		break;
+
 	case CLAMP_NOFILTER_XY:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -139,14 +157,14 @@ uint8_t FSamplerManager::Bind(int texunit, int num, int lastval)
 	return 255;
 }
 
-	
+
 void FSamplerManager::SetTextureFilterMode()
 {
 	/*
 	GLRenderer->FlushTextures();
 
 	GLint bounds[IHardwareTexture::MAX_TEXTURES];
-	
+
 	// Unbind all
 	for(int i = IHardwareTexture::MAX_TEXTURES-1; i >= 0; i--)
 	{

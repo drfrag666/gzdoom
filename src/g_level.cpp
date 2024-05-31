@@ -33,7 +33,7 @@
 */
 
 #include <assert.h>
-#include "templates.h"
+
 #include "d_main.h"
 #include "g_level.h"
 #include "g_game.h"
@@ -469,7 +469,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 
 	// did we have any level before?
 	if (primaryLevel->info != nullptr)
-		staticEventManager.WorldUnloaded();
+		staticEventManager.WorldUnloaded(FString());	// [MK] don't pass the new map, as it's not a level transition
 
 	if (!savegamerestore)
 	{
@@ -703,10 +703,10 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags,
 	for (auto Level : AllLevels())
 	{
 		// Todo: This must be exolicitly sandboxed!
-		Level->localEventManager->WorldUnloaded();
+		Level->localEventManager->WorldUnloaded(nextlevel);
 	}
 	// [ZZ] unsafe world unload (changemap != map)
-	staticEventManager.WorldUnloaded();
+	staticEventManager.WorldUnloaded(nextlevel);
 	unloading = false;
 
 	STAT_ChangeLevel(nextlevel, this);
@@ -2296,4 +2296,3 @@ void FLevelLocals::SetMusic()
 {
 	S_ChangeMusic(Music, musicorder);
 }
-

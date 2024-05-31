@@ -34,7 +34,7 @@
 #include "c_dispatch.h"
 #include "c_cvars.h"
 #include "v_video.h"
-#include "templates.h"
+
 #include "r_videoscale.h"
 #include "cmdlib.h"
 #include "v_draw.h"
@@ -158,7 +158,7 @@ bool ViewportLinearScale()
 		aspectmult = 1.f / aspectmult;
 	if ((ViewportScaledWidth(x,y) > (x * aspectmult)) || (ViewportScaledHeight(x,y) > (y * aspectmult)))
 		return true;
-	
+
 	return vid_scale_linear;
 }
 
@@ -174,7 +174,7 @@ int ViewportScaledWidth(int width, int height)
 	uint32_t tablewidth = vScaleTable[vid_scalemode].GetScaledWidth(width, height);
 	if (!ui_classic && tablewidth < VID_MIN_UI_WIDTH)
 		tablewidth = VID_MIN_UI_WIDTH;
-	return (int)std::max((int32_t)VID_MIN_WIDTH, (int32_t)(vid_scalefactor * tablewidth));
+	return (int)max((int32_t)VID_MIN_WIDTH, (int32_t)(vid_scalefactor * tablewidth));
 }
 
 int ViewportScaledHeight(int width, int height)
@@ -189,7 +189,7 @@ int ViewportScaledHeight(int width, int height)
 	uint32_t tableheight = vScaleTable[vid_scalemode].GetScaledHeight(width, height);
 	if (!ui_classic && tableheight < VID_MIN_UI_HEIGHT)
 		tableheight = VID_MIN_UI_HEIGHT;
-	return (int)std::max((int32_t)VID_MIN_HEIGHT, (int32_t)(vid_scalefactor * tableheight));
+	return (int)max((int32_t)VID_MIN_HEIGHT, (int32_t)(vid_scalefactor * tableheight));
 }
 
 float ViewportPixelAspect()

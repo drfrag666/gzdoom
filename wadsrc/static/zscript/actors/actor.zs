@@ -67,6 +67,12 @@ struct LinkContext
 	voidptr render_list;
 }
 
+class ViewPosition native
+{
+	native readonly Vector3 Offset;
+	native readonly int Flags;
+}
+
 
 class Actor : Thinker native
 {
@@ -89,6 +95,7 @@ class Actor : Thinker native
 	// for some comments on these fields, see their native representations in actor.h.
 	native readonly Actor snext;	// next in sector list.
 	native PlayerInfo Player;
+	native readonly ViewPosition ViewPos; // Will be null until A_SetViewPos() is called for the first time.
 	native readonly vector3 Pos;
 	native vector3 Prev;
 	native uint ThruBits;
@@ -615,7 +622,7 @@ class Actor : Thinker native
 	native static int GetSpriteIndex(name sprt);
 	native clearscope static double GetDefaultSpeed(class<Actor> type);
 	native static class<Actor> GetSpawnableType(int spawnnum);
-	native static int ApplyDamageFactors(class<Inventory> itemcls, Name damagetype, int damage, int defdamage);
+	native clearscope static int ApplyDamageFactors(class<Inventory> itemcls, Name damagetype, int damage, int defdamage);
 	native void RemoveFromHash();
 	native void ChangeTid(int newtid);
 	deprecated("3.8", "Use Level.FindUniqueTid() instead") static int FindUniqueTid(int start = 0, int limit = 0)
@@ -684,7 +691,7 @@ class Actor : Thinker native
 	native Actor, Actor SpawnPlayerMissile(class<Actor> type, double angle = 1e37, double x = 0, double y = 0, double z = 0, out FTranslatedLineTarget pLineTarget = null, bool nofreeaim = false, bool noautoaim = false, int aimflags = 0);
 	native void SpawnTeleportFog(Vector3 pos, bool beforeTele, bool setTarget);
 	native Actor RoughMonsterSearch(int distance, bool onlyseekable = false, bool frontonly = false, double fov = 0);
-	native int ApplyDamageFactor(Name damagetype, int damage);
+	native clearscope int ApplyDamageFactor(Name damagetype, int damage);
 	native int GetModifiedDamage(Name damagetype, int damage, bool passive, Actor inflictor = null, Actor source = null, int flags = 0);
 	native bool CheckBossDeath();
 	native bool CheckFov(Actor target, double fov);
@@ -1157,6 +1164,7 @@ class Actor : Thinker native
 	native void A_SetViewAngle(double angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetViewPitch(double pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetViewRoll(double roll, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void SetViewPos(Vector3 offset, int flags = -1);
 	deprecated("2.3", "User variables are deprecated in ZScript. Actor variables are directly accessible") native void A_SetUserVar(name varname, int value);
 	deprecated("2.3", "User variables are deprecated in ZScript. Actor variables are directly accessible") native void A_SetUserArray(name varname, int index, int value);
 	deprecated("2.3", "User variables are deprecated in ZScript. Actor variables are directly accessible") native void A_SetUserVarFloat(name varname, double value);

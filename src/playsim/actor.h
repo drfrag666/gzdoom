@@ -30,7 +30,7 @@
 #define __P_MOBJ_H__
 
 // Basics.
-#include "templates.h"
+
 
 // We need the thinker_t stuff.
 #include "dthinker.h"
@@ -654,6 +654,42 @@ struct FDropItem
 	int Amount;
 };
 
+enum EViewPosFlags // [MC] Flags for SetViewPos.
+{
+	VPSF_ABSOLUTEOFFSET =	1 << 1,			// Don't include angles.
+	VPSF_ABSOLUTEPOS =		1 << 2,			// Use absolute position.
+};
+
+class FViewPosition : public DObject
+{
+	DECLARE_CLASS(FViewPosition, DObject);
+public:
+	// Variables
+	// Exposed to ZScript
+	DVector3	Offset;
+	int			Flags;
+
+	// Functions
+	FViewPosition()
+	{
+		Offset = { 0,0,0 };
+		Flags = 0;
+	}
+
+	void Set(DVector3 &off, int f = -1)
+	{
+		Offset = off;
+
+		if (f > -1)
+			Flags = f;
+	}
+
+	bool isZero()
+	{
+		return Offset.isZero();
+	}
+};
+
 const double MinVel = EQUAL_EPSILON;
 
 // Map Object definition.
@@ -974,7 +1010,8 @@ public:
 	DAngle			SpriteAngle;
 	DAngle			SpriteRotation;
 	DRotator		Angles;
-	DRotator		ViewAngles;			// Offsets for cameras
+	DRotator		ViewAngles;			// Angle offsets for cameras
+	FViewPosition	*ViewPos;			// Position offsets for cameras
 	DVector2		Scale;				// Scaling values; 1 is normal size
 	double			Alpha;				// Since P_CheckSight makes an alpha check this can't be a float. It has to be a double.
 
@@ -1301,7 +1338,7 @@ public:
 
 	double RenderRadius() const
 	{
-		return MAX(radius, renderradius);
+		return max(radius, renderradius);
 	}
 
 	DVector3 PosRelative(int grp) const;
@@ -1453,7 +1490,7 @@ public:
 	// Better have it in one place, if something needs to be changed about the formula.
 	double DistanceBySpeed(AActor *dest, double speed) const
 	{
-		return MAX(1., Distance2D(dest) / speed);
+		return max(1., Distance2D(dest) / speed);
 	}
 
 	int ApplyDamageFactor(FName damagetype, int damage) const;

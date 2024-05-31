@@ -45,6 +45,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#pragma warning(disable:4996)
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -73,7 +74,7 @@
 
 #include "i_input.h"
 #include "c_dispatch.h"
-#include "templates.h"
+
 #include "gameconfigfile.h"
 #include "v_font.h"
 #include "i_system.h"
@@ -287,8 +288,8 @@ static void DoPrintStr(const char *cpt, HWND edit, HANDLE StdOut)
 
 	wchar_t wbuf[256];
 	int bpos = 0;
-	CHARRANGE selection;
-	CHARRANGE endselection;
+	CHARRANGE selection = {};
+	CHARRANGE endselection = {};
 	LONG lines_before = 0, lines_after;
 	CHARFORMAT format;
 
@@ -778,7 +779,7 @@ static HCURSOR CreateAlphaCursor(FBitmap &source, int leftofs, int topofs)
 	// Find closest integer scale factor for the monitor DPI
 	HDC screenDC = GetDC(0);
 	int dpi = GetDeviceCaps(screenDC, LOGPIXELSX);
-	int scale = std::max((dpi + 96 / 2 - 1) / 96, 1);
+	int scale = max((dpi + 96 / 2 - 1) / 96, 1);
 	ReleaseDC(0, screenDC);
 
 	memset(&bi, 0, sizeof(bi));
@@ -867,7 +868,7 @@ static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP 
 	// Delete the bitmaps.
 	DeleteObject(and_mask);
 	DeleteObject(color_mask);
-	
+
 	return cursor;
 }
 

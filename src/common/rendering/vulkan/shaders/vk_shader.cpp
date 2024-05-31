@@ -150,7 +150,7 @@ static const char *shaderBindings = R"(
 		int useVertexData;
 		vec4 uVertexColor;
 		vec4 uVertexNormal;
-		
+
 		vec4 uGlowTopPlane;
 		vec4 uGlowTopColor;
 		vec4 uGlowBottomPlane;
@@ -172,6 +172,7 @@ static const char *shaderBindings = R"(
 	};
 
 	layout(set = 0, binding = 4) uniform sampler2D ShadowMap;
+	layout(set = 0, binding = 5) uniform sampler2DArray LightMap;
 
 	// textures
 	layout(set = 1, binding = 0) uniform sampler2D tex;

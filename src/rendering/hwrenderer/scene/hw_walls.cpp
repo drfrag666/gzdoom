@@ -705,7 +705,7 @@ bool HWWall::SplitWallComplex(HWDrawInfo *di, sector_t * frontsector, bool trans
 	if ((maplightbottomleft<ztop[0] && maplightbottomright>ztop[1]) ||
 		(maplightbottomleft>ztop[0] && maplightbottomright<ztop[1]))
 	{
-		float clen = MAX<float>(fabsf(glseg.x2 - glseg.x1), fabsf(glseg.y2 - glseg.y1));
+		float clen = max<float>(fabsf(glseg.x2 - glseg.x1), fabsf(glseg.y2 - glseg.y1));
 
 		float dch = ztop[1] - ztop[0];
 		float dfh = maplightbottomright - maplightbottomleft;
@@ -734,6 +734,10 @@ bool HWWall::SplitWallComplex(HWDrawInfo *di, sector_t * frontsector, bool trans
 			copyWall1.tcs[UPRGT].v = copyWall2.tcs[UPLFT].v = tcs[UPLFT].v + coeff * (tcs[UPRGT].v - tcs[UPLFT].v);
 			copyWall1.tcs[LORGT].u = copyWall2.tcs[LOLFT].u = tcs[LOLFT].u + coeff * (tcs[LORGT].u - tcs[LOLFT].u);
 			copyWall1.tcs[LORGT].v = copyWall2.tcs[LOLFT].v = tcs[LOLFT].v + coeff * (tcs[LORGT].v - tcs[LOLFT].v);
+			copyWall1.lightuv[UPRGT].u = copyWall2.lightuv[UPLFT].u = lightuv[UPLFT].u + coeff * (lightuv[UPRGT].u - lightuv[UPLFT].u);
+			copyWall1.lightuv[UPRGT].v = copyWall2.lightuv[UPLFT].v = lightuv[UPLFT].v + coeff * (lightuv[UPRGT].v - lightuv[UPLFT].v);
+			copyWall1.lightuv[LORGT].u = copyWall2.lightuv[LOLFT].u = lightuv[LOLFT].u + coeff * (lightuv[LORGT].u - lightuv[LOLFT].u);
+			copyWall1.lightuv[LORGT].v = copyWall2.lightuv[LOLFT].v = lightuv[LOLFT].v + coeff * (lightuv[LORGT].v - lightuv[LOLFT].v);
 
 			copyWall1.SplitWall(di, frontsector, translucent);
 			copyWall2.SplitWall(di, frontsector, translucent);
@@ -745,7 +749,7 @@ bool HWWall::SplitWallComplex(HWDrawInfo *di, sector_t * frontsector, bool trans
 	if ((maplightbottomleft<zbottom[0] && maplightbottomright>zbottom[1]) ||
 		(maplightbottomleft>zbottom[0] && maplightbottomright<zbottom[1]))
 	{
-		float clen = MAX<float>(fabsf(glseg.x2 - glseg.x1), fabsf(glseg.y2 - glseg.y1));
+		float clen = max<float>(fabsf(glseg.x2 - glseg.x1), fabsf(glseg.y2 - glseg.y1));
 
 		float dch = zbottom[1] - zbottom[0];
 		float dfh = maplightbottomright - maplightbottomleft;
@@ -775,6 +779,10 @@ bool HWWall::SplitWallComplex(HWDrawInfo *di, sector_t * frontsector, bool trans
 			copyWall1.tcs[UPRGT].v = copyWall2.tcs[UPLFT].v = tcs[UPLFT].v + coeff * (tcs[UPRGT].v - tcs[UPLFT].v);
 			copyWall1.tcs[LORGT].u = copyWall2.tcs[LOLFT].u = tcs[LOLFT].u + coeff * (tcs[LORGT].u - tcs[LOLFT].u);
 			copyWall1.tcs[LORGT].v = copyWall2.tcs[LOLFT].v = tcs[LOLFT].v + coeff * (tcs[LORGT].v - tcs[LOLFT].v);
+			copyWall1.lightuv[UPRGT].u = copyWall2.lightuv[UPLFT].u = lightuv[UPLFT].u + coeff * (lightuv[UPRGT].u - lightuv[UPLFT].u);
+			copyWall1.lightuv[UPRGT].v = copyWall2.lightuv[UPLFT].v = lightuv[UPLFT].v + coeff * (lightuv[UPRGT].v - lightuv[UPLFT].v);
+			copyWall1.lightuv[LORGT].u = copyWall2.lightuv[LOLFT].u = lightuv[LOLFT].u + coeff * (lightuv[LORGT].u - lightuv[LOLFT].u);
+			copyWall1.lightuv[LORGT].v = copyWall2.lightuv[LOLFT].v = lightuv[LOLFT].v + coeff * (lightuv[LORGT].v - lightuv[LOLFT].v);
 
 			copyWall1.SplitWall(di, frontsector, translucent);
 			copyWall2.SplitWall(di, frontsector, translucent);
@@ -870,6 +878,10 @@ void HWWall::SplitWall(HWDrawInfo *di, sector_t * frontsector, bool translucent)
 					(maplightbottomleft-copyWall1.ztop[0])*(copyWall1.tcs[LOLFT].v-copyWall1.tcs[UPLFT].v)/(zbottom[0]-copyWall1.ztop[0]);
 				tcs[UPRGT].v=copyWall1.tcs[LORGT].v=copyWall1.tcs[UPRGT].v+ 
 					(maplightbottomright-copyWall1.ztop[1])*(copyWall1.tcs[LORGT].v-copyWall1.tcs[UPRGT].v)/(zbottom[1]-copyWall1.ztop[1]);
+				lightuv[UPLFT].v=copyWall1.lightuv[LOLFT].v=copyWall1.lightuv[UPLFT].v+ 
+					(maplightbottomleft-copyWall1.ztop[0])*(copyWall1.lightuv[LOLFT].v-copyWall1.lightuv[UPLFT].v)/(zbottom[0]-copyWall1.ztop[0]);
+				lightuv[UPRGT].v=copyWall1.lightuv[LORGT].v=copyWall1.lightuv[UPRGT].v+ 
+					(maplightbottomright-copyWall1.ztop[1])*(copyWall1.lightuv[LORGT].v-copyWall1.lightuv[UPRGT].v)/(zbottom[1]-copyWall1.ztop[1]);
 				copyWall1.Put3DWall(di, &lightlist[i], translucent);
 			}
 			if (ztop[0]==zbottom[0] && ztop[1]==zbottom[1]) 
@@ -967,6 +979,8 @@ bool HWWall::DoHorizon(HWDrawInfo *di, seg_t * seg,sector_t * fs, vertex_t * v1,
 	return true;
 }
 
+static float ZeroLightmapUVs[8] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+
 //==========================================================================
 //
 // 
@@ -997,6 +1011,17 @@ bool HWWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 		texlength = 0;
 	}
 
+	texcoord* srclightuv;
+	if (lightmap && lightmap->Type != ST_NULL)
+	{
+		srclightuv = (texcoord*)lightmap->TexCoords;
+		lindex = (float)lightmap->LightmapNum;
+	}
+	else
+	{
+		srclightuv = (texcoord*)ZeroLightmapUVs;
+		lindex = -1.0f;
+	}
 
 	//
 	//
@@ -1014,6 +1039,9 @@ bool HWWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 			tcs[UPLFT].v = tci->FloatToTexV(-ztop[0] + texturetop);
 			tcs[LOLFT].v = tci->FloatToTexV(-zbottom[0] + texturetop);
 		}
+
+		lightuv[UPLFT].v = srclightuv[UPLFT].v;
+		lightuv[LOLFT].v = srclightuv[LOLFT].v;
 	}
 	else
 	{
@@ -1034,6 +1062,9 @@ bool HWWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 		{
 			tcs[LOLFT].v = tcs[UPLFT].v = tci->FloatToTexV(-ztop[0] + texturetop);
 		}
+
+		lightuv[UPLFT].v = srclightuv[UPLFT].v + inter_x * (srclightuv[UPRGT].v - srclightuv[UPLFT].v);
+		lightuv[LOLFT].v = srclightuv[LOLFT].v + inter_x * (srclightuv[LORGT].v - srclightuv[LOLFT].v);
 	}
 
 	//
@@ -1052,6 +1083,9 @@ bool HWWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 			tcs[UPRGT].v = tci->FloatToTexV(-ztop[1] + texturetop);
 			tcs[LORGT].v = tci->FloatToTexV(-zbottom[1] + texturetop);
 		}
+
+		lightuv[UPRGT].v = srclightuv[UPRGT].v;
+		lightuv[LORGT].v = srclightuv[LORGT].v;
 	}
 	else
 	{
@@ -1071,10 +1105,18 @@ bool HWWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 		{
 			tcs[LORGT].v = tcs[UPRGT].v = tci->FloatToTexV(-ztop[1] + texturetop);
 		}
+
+		lightuv[UPRGT].v = srclightuv[UPRGT].v + inter_x * (srclightuv[UPRGT].v - srclightuv[UPLFT].v);
+		lightuv[LORGT].v = srclightuv[LORGT].v + inter_x * (srclightuv[LORGT].v - srclightuv[LOLFT].v);
 	}
 
 	tcs[UPLFT].u = tcs[LOLFT].u = l_ul + texlength * glseg.fracleft;
 	tcs[UPRGT].u = tcs[LORGT].u = l_ul + texlength * glseg.fracright;
+
+	lightuv[UPLFT].u = srclightuv[UPLFT].u + (srclightuv[UPRGT].u - srclightuv[UPLFT].u) * glseg.fracleft;
+	lightuv[LOLFT].u = srclightuv[LOLFT].u + (srclightuv[LORGT].u - srclightuv[LOLFT].u) * glseg.fracleft;
+	lightuv[UPRGT].u = srclightuv[UPLFT].u + (srclightuv[UPRGT].u - srclightuv[UPLFT].u) * glseg.fracright;
+	lightuv[LORGT].u = srclightuv[LOLFT].u + (srclightuv[LORGT].u - srclightuv[LOLFT].u) * glseg.fracright;
 
 	if (texture != NULL)
 	{
@@ -1216,6 +1258,15 @@ void HWWall::DoTexture(HWDrawInfo *di, int _type,seg_t * seg, int peg,
 
 	type = _type;
 
+	if (seg->sidedef->lightmap && type >= RENDERWALL_TOP && type <= RENDERWALL_BOTTOM)
+	{
+		lightmap = &seg->sidedef->lightmap[type - RENDERWALL_TOP];
+	}
+	else
+	{
+		lightmap = nullptr;
+	}
+
 	float floatceilingref = ceilingrefheight + tci.RowOffset(seg->sidedef->GetTextureYOffset(texpos));
 	if (peg) floatceilingref += tci.mRenderHeight - flh - v_offset;
 
@@ -1283,12 +1334,12 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 		rowoffset = tci.RowOffset(seg->sidedef->GetTextureYOffset(side_t::mid));
 		if ((seg->linedef->flags & ML_DONTPEGBOTTOM) >0)
 		{
-			texturebottom = MAX(realfront->GetPlaneTexZ(sector_t::floor), realback->GetPlaneTexZ(sector_t::floor) + zalign) + rowoffset;
+			texturebottom = max(realfront->GetPlaneTexZ(sector_t::floor), realback->GetPlaneTexZ(sector_t::floor) + zalign) + rowoffset;
 			texturetop = texturebottom + tci.mRenderHeight;
 		}
 		else
 		{
-			texturetop = MIN(realfront->GetPlaneTexZ(sector_t::ceiling), realback->GetPlaneTexZ(sector_t::ceiling) + zalign) + rowoffset;
+			texturetop = min(realfront->GetPlaneTexZ(sector_t::ceiling), realback->GetPlaneTexZ(sector_t::ceiling) + zalign) + rowoffset;
 			texturebottom = texturetop - tci.mRenderHeight;
 		}
 	}
@@ -1319,8 +1370,8 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 			else
 			{
 				// texture is missing - use the higher plane
-				topleft = MAX(bch1,fch1);
-				topright = MAX(bch2,fch2);
+				topleft = max(bch1,fch1);
+				topright = max(bch2,fch2);
 			}
 		}
 		else if ((bch1>fch1 || bch2>fch2) && 
@@ -1334,8 +1385,8 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 		else
 		{
 			// But not if there can be visual artifacts.
-			topleft = MIN(bch1,fch1);
-			topright = MIN(bch2,fch2);
+			topleft = min(bch1,fch1);
+			topright = min(bch2,fch2);
 		}
 		
 		//
@@ -1347,8 +1398,8 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 		if (!tex || !tex->isValid())
 		{
 			// texture is missing - use the lower plane
-			bottomleft = MIN(bfh1,ffh1);
-			bottomright = MIN(bfh2,ffh2);
+			bottomleft = min(bfh1,ffh1);
+			bottomright = min(bfh2,ffh2);
 		}
 		else if (bfh1<ffh1 || bfh2<ffh2) // (!((bfh1<=ffh1 && bfh2<=ffh2) || (bfh1>=ffh1 && bfh2>=ffh2)))
 		{
@@ -1360,8 +1411,8 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 		else
 		{
 			// normal case - use the higher plane
-			bottomleft = MAX(bfh1,ffh1);
-			bottomright = MAX(bfh2,ffh2);
+			bottomleft = max(bfh1,ffh1);
+			bottomright = max(bfh2,ffh2);
 		}
 		
 		//
@@ -1514,8 +1565,8 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 			int i,t=0;
 			float v_factor=(zbottom[0]-ztop[0])/(tcs[LOLFT].v-tcs[UPLFT].v);
 			// only split the vertical area of the polygon that does not contain slopes.
-			float splittopv = MAX(tcs[UPLFT].v, tcs[UPRGT].v);
-			float splitbotv = MIN(tcs[LOLFT].v, tcs[LORGT].v);
+			float splittopv = max(tcs[UPLFT].v, tcs[UPRGT].v);
+			float splitbotv = min(tcs[LOLFT].v, tcs[LORGT].v);
 
 			// this is split vertically into sections.
 			for(i=0;i<v;i++)
@@ -1583,7 +1634,7 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 // 
 //
 //==========================================================================
-void HWWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
+void HWWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover, int roverIndex,
 	float ff_topleft, float ff_topright,
 	float ff_bottomleft, float ff_bottomright)
 {
@@ -1596,6 +1647,15 @@ void HWWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
 	float ul;
 	float texlength;
 	FTexCoordInfo tci;
+
+	lightmap = nullptr;
+	if (seg->sidedef == seg->linedef->sidedef[0])
+		lightmap = seg->linedef->sidedef[1]->lightmap;
+	else
+		lightmap = seg->linedef->sidedef[0]->lightmap;
+
+	if (lightmap)
+		lightmap += 4 + roverIndex;
 
 	if (rover->flags&FF_FOG)
 	{
@@ -1655,6 +1715,28 @@ void HWWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
 		tcs[LORGT].v = tci.FloatToTexV(to - ff_bottomright);
 		type = RENDERWALL_FFBLOCK;
 		CheckTexturePosition(&tci);
+
+		texcoord* srclightuv;
+		if (lightmap && lightmap->Type != ST_NULL)
+		{
+			srclightuv = (texcoord*)lightmap->TexCoords;
+			lindex = (float)lightmap->LightmapNum;
+		}
+		else
+		{
+			srclightuv = (texcoord*)ZeroLightmapUVs;
+			lindex = -1.0f;
+		}
+
+		lightuv[UPLFT].u = srclightuv[UPLFT].u + (srclightuv[UPRGT].u - srclightuv[UPLFT].u) * glseg.fracleft;
+		lightuv[LOLFT].u = srclightuv[LOLFT].u + (srclightuv[LORGT].u - srclightuv[LOLFT].u) * glseg.fracleft;
+		lightuv[UPRGT].u = srclightuv[UPLFT].u + (srclightuv[UPRGT].u - srclightuv[UPLFT].u) * glseg.fracright;
+		lightuv[LORGT].u = srclightuv[LOLFT].u + (srclightuv[LORGT].u - srclightuv[LOLFT].u) * glseg.fracright;
+
+		lightuv[UPLFT].v = srclightuv[UPLFT].v;
+		lightuv[UPRGT].v = srclightuv[UPRGT].v;
+		lightuv[LOLFT].v = srclightuv[LOLFT].v;
+		lightuv[LORGT].v = srclightuv[LORGT].v;
 	}
 
 	ztop[0] = ff_topleft;
@@ -1744,7 +1826,7 @@ void HWWall::InverseFloors(HWDrawInfo *di, seg_t * seg, sector_t * frontsector,
 		}
 		if (ff_topleft < ff_bottomleft || ff_topright < ff_bottomright) continue;
 
-		BuildFFBlock(di, seg, rover, ff_topleft, ff_topright, ff_bottomleft, ff_bottomright);
+		BuildFFBlock(di, seg, rover, i, ff_topleft, ff_topright, ff_bottomleft, ff_bottomright);
 		topleft = ff_bottomleft;
 		topright = ff_bottomright;
 
@@ -1757,7 +1839,7 @@ void HWWall::InverseFloors(HWDrawInfo *di, seg_t * seg, sector_t * frontsector,
 // 
 //
 //==========================================================================
-void HWWall::ClipFFloors(HWDrawInfo *di, seg_t * seg, F3DFloor * ffloor, sector_t * frontsector,
+void HWWall::ClipFFloors(HWDrawInfo *di, seg_t * seg, F3DFloor * ffloor, int ffloorIndex, sector_t * frontsector,
 	float topleft, float topright,
 	float bottomleft, float bottomright)
 {
@@ -1808,7 +1890,7 @@ void HWWall::ClipFFloors(HWDrawInfo *di, seg_t * seg, F3DFloor * ffloor, sector_
 		}
 		else if (ff_topleft <= topleft && ff_topright <= topright)
 		{
-			BuildFFBlock(di, seg, ffloor, topleft, topright, ff_topleft, ff_topright);
+			BuildFFBlock(di, seg, ffloor, ffloorIndex, topleft, topright, ff_topleft, ff_topright);
 			if (ff_bottomleft <= bottomleft && ff_bottomright <= bottomright) return;
 			topleft = ff_bottomleft;
 			topright = ff_bottomright;
@@ -1823,7 +1905,7 @@ void HWWall::ClipFFloors(HWDrawInfo *di, seg_t * seg, F3DFloor * ffloor, sector_
 
 done:
 	// if the program reaches here there is one block left to draw
-	BuildFFBlock(di, seg, ffloor, topleft, topright, bottomleft, bottomright);
+	BuildFFBlock(di, seg, ffloor, ffloorIndex, topleft, topright, bottomleft, bottomright);
 }
 
 //==========================================================================
@@ -1897,9 +1979,9 @@ void HWWall::DoFFloorBlocks(HWDrawInfo *di, seg_t * seg, sector_t * frontsector,
 
 		// if translucent or liquid clip away adjoining parts of the same type of FFloors on the other side
 		if (rover->flags&(FF_SWIMMABLE | FF_TRANSLUCENT))
-			ClipFFloors(di, seg, rover, frontsector, ff_topleft, ff_topright, ff_bottomleft, ff_bottomright);
+			ClipFFloors(di, seg, rover, i, frontsector, ff_topleft, ff_topright, ff_bottomleft, ff_bottomright);
 		else
-			BuildFFBlock(di, seg, rover, ff_topleft, ff_topright, ff_bottomleft, ff_bottomright);
+			BuildFFBlock(di, seg, rover, i, ff_topleft, ff_topright, ff_bottomleft, ff_bottomright);
 
 		topleft = ff_bottomleft;
 		topright = ff_bottomright;
@@ -1939,6 +2021,8 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 		int a = 0;
 	}
 #endif
+
+	lightmap = nullptr;
 
 	// note: we always have a valid sidedef and linedef reference when getting here.
 

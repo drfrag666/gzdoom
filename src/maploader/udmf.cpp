@@ -109,21 +109,22 @@ static inline bool P_IsThingSpecial(int specnum)
 	return (specnum >= Thing_Projectile && specnum <= Thing_SpawnNoFog) ||
 			specnum == Thing_SpawnFacing || specnum == Thing_ProjectileIntercept || specnum == Thing_ProjectileAimed;
 }
-
-enum
+namespace
 {
-	Dm=1,
-	Ht=2,
-	Hx=4,
-	St=8,
-	Zd=16,
-	Zdt=32,
-	Va=64,
+	enum
+	{
+		Dm=1,		// Doom
+		Ht=2,		// Heretic
+		Hx=4,		// Hexen
+		St=8,		// Strife
+		Zd=16,		// ZDoom
+		Zdt=32,		// ZDoom Translated
+		Va=64,		// Vavoom
 
-	// will be extended later. Unknown namespaces will always be treated like the base
-	// namespace for each game
-};
-
+		// will be extended later. Unknown namespaces will always be treated like the base
+		// namespace for each game
+	};
+}
 #define CHECK_N(f) if (!(namespace_bits&(f))) break;
 
 //===========================================================================
@@ -752,6 +753,21 @@ public:
 				th->friendlyseeblocks = CheckInt(key);
 				break;
 
+			case NAME_Lightcolor:
+			case NAME_lightintensity:
+			case NAME_lightdistance:
+			case NAME_lightinnerangle:
+			case NAME_lightouterangle:
+			case NAME_suncolor:
+			case NAME_sundirx:
+			case NAME_sundiry:
+			case NAME_sundirz:
+			case NAME_sampledistance:
+			case NAME_bounces:
+			case NAME_gridsize:
+				CHECK_N(Zd | Zdt)
+				break;
+
 			default:
 				CHECK_N(Zd | Zdt)
 				if (0 == strnicmp("user_", key.GetChars(), 5))
@@ -1120,6 +1136,12 @@ public:
 
 			case NAME_HealthGroup:
 				ld->healthgroup = CheckInt(key);
+				break;
+
+			case NAME_Lightcolor:
+			case NAME_lightintensity:
+			case NAME_lightdistance:
+				CHECK_N(Zd | Zdt)
 				break;
 
 			default:
@@ -1947,7 +1969,16 @@ public:
 				case NAME_Health3DGroup:
 					sec->health3dgroup = CheckInt(key);
 					break;
-					
+
+				case NAME_lightcolorfloor:
+				case NAME_lightintensityfloor:
+				case NAME_lightdistancefloor:
+				case NAME_lightcolorceiling:
+				case NAME_lightintensityceiling:
+				case NAME_lightdistanceceiling:
+					CHECK_N(Zd | Zdt)
+					break;
+
 				default:
 					if (strnicmp("user_", key.GetChars(), 5))
 						DPrintf(DMSG_WARNING, "Unknown UDMF sector key %s\n", key.GetChars());

@@ -36,7 +36,7 @@
 #include "gl_system.h"
 #include "v_video.h"
 #include "m_png.h"
-#include "templates.h"
+
 #include "i_time.h"
 
 #include "gl_interface.h"
@@ -69,7 +69,6 @@ EXTERN_CVAR(Int, gl_pipeline_depth);
 
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
-void Draw2D(F2DDrawer *drawer, FRenderState &state);
 
 extern bool vid_hdr_active;
 
@@ -326,7 +325,6 @@ void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 {
 	if (mat->Source()->GetUseType() == ETextureType::SWCanvas) return;
 
-	int flags = mat->GetScaleFlags();
 	int numLayers = mat->NumLayers();
 	MaterialLayerInfo* layer;
 	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0, translation, &layer));
@@ -362,6 +360,29 @@ IDataBuffer *OpenGLFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo, bo
 void OpenGLFrameBuffer::BlurScene(float amount)
 {
 	GLRenderer->BlurScene(amount);
+}
+
+void OpenGLFrameBuffer::InitLightmap(FLevelLocals *Level)
+{
+	if (Level->LMTextureData.Size() > 0)
+	{
+		GLint activeTex = 0;
+		glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTex);
+		glActiveTexture(GL_TEXTURE0 + 17);
+
+		if (GLRenderer->mLightMapID == 0)
+			glGenTextures(1, (GLuint*)&GLRenderer->mLightMapID);
+
+		glBindTexture(GL_TEXTURE_2D_ARRAY, GLRenderer->mLightMapID);
+		glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB16F, Level->LMTextureSize, Level->LMTextureSize, Level->LMTextureCount, 0, GL_RGB, GL_HALF_FLOAT, &Level->LMTextureData[0]);
+		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+
+		glActiveTexture(activeTex);
+
+		Level->LMTextureData.Reset(); // We no longer need this, release the memory
+	}
 }
 
 void OpenGLFrameBuffer::SetViewportRects(IntRect *bounds)
