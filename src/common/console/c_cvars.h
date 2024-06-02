@@ -185,6 +185,12 @@ public:
 		ToggleMessages[1] = on;
 	}
 
+	void SetCallback(void (*callback)(FBaseCVar&));
+	void ClearCallback();
+
+	void SetExtraDataPointer(void *pointer);
+
+	void* GetExtraDataPointer();
 
 protected:
 	virtual void DoSet (UCVarValue value, ECVarType type) = 0;
@@ -205,14 +211,19 @@ protected:
 	uint32_t Flags;
 	bool inCallback = false;
 
+public:
+	static inline bool m_inEnable = false;
+
 private:
 	FBaseCVar (const FBaseCVar &var) = delete;
 	FBaseCVar (const char *name, uint32_t flags);
 	void (*m_Callback)(FBaseCVar &);
 	FBaseCVar *m_Next;
 
-	static bool m_UseCallback;
-	static bool m_DoNoSet;
+	static inline bool m_UseCallback = false;
+	static inline bool m_DoNoSet = false;
+
+	void *m_ExtraDataPointer;
 
 	// These need to go away!
 	friend FString C_GetMassCVarString (uint32_t filter, bool compact);

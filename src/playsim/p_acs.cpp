@@ -8767,7 +8767,7 @@ scriptwait:
 							char consolecolor[3];
 
 							consolecolor[0] = '\x1c';
-							consolecolor[1] = color >= CR_BRICK && color <= CR_YELLOW ? color + 'A' : '-';
+							consolecolor[1] = color >= CR_BRICK && color < NUM_TEXT_COLORS && color != CR_UNTRANSLATED ? color + 'A' : '-';
 							consolecolor[2] = '\0';
 							AddToConsole (-1, bar);
 							AddToConsole (-1, consolecolor);
@@ -8776,7 +8776,7 @@ scriptwait:
 						}
 						else
 						{
-							int consolecolor = color >= CR_BRICK && color <= CR_YELLOW ? color + 'A' : '-';
+							int consolecolor = color >= CR_BRICK && color < NUM_TEXT_COLORS && color != CR_UNTRANSLATED ? color + 'A' : '-';
 							Printf(PRINT_NONOTIFY, "\n" TEXTCOLOR_ESCAPESTR "%c%s\n%s\n%s\n", consolecolor, console_bar, work.GetChars(), console_bar);
 						}
 					}

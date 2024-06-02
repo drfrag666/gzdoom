@@ -201,7 +201,7 @@ vec4 getTexel(vec2 st)
 #if (DEF_BLEND_FLAGS != 0)	
 
 	// only apply the texture manipulation if it contains something.
-	texel = ApplyTextureManipulation(texel, DEF_BLEND_FLAGS);
+	texel = ApplyTextureManipulation(texel);
 
 #endif
 
@@ -537,7 +537,7 @@ void main()
 		#if (DEF_TEXTURE_MODE == 7)
 		{
 			float gray = grayscale(frag);
-			vec4 cm = (uObjectColor + gray * (uAddColor - uObjectColor)) * 2;
+			vec4 cm = (uObjectColor + gray * (uAddColor - uObjectColor)) * 2.0;
 			frag = vec4(clamp(cm.rgb, 0.0, 1.0), frag.a);
 		}		
 		#endif

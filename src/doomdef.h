@@ -172,7 +172,8 @@ enum
 	DF2_RESPAWN_SUPER		= 1 << 27,	// Respawn invulnerability and invisibility
 	DF2_NO_COOP_THING_SPAWN	= 1 << 28,	// Don't spawn multiplayer things in coop games
 	DF2_ALWAYS_SPAWN_MULTI	= 1 << 29,	// Always spawn multiplayer items
-	DF2_DOUBLESPAWN			= 1 << 30,	// Spawn double the monsters
+	DF2_NOVERTSPREAD		= 1 << 30,	// Don't allow vertical spread for hitscan weapons (excluding ssg)
+	DF2_DOUBLESPAWN			= 1 << 31,	// Spawn double the monsters
 };
 
 // [RH] Compatibility flags.
@@ -225,7 +226,8 @@ enum : unsigned int
 	COMPATF2_SCRIPTWAIT		= 1 << 11,	// Use old scriptwait implementation where it doesn't wait on a non-running script.
 	COMPATF2_AVOID_HAZARDS	= 1 << 12,	// another MBF thing.
 	COMPATF2_STAYONLIFT		= 1 << 13,	// yet another MBF thing.
-	COMPATF2_OLD_RANDOM_GENERATOR	= 1 << 14,	// [BB] Use Doom's random table instead of ZDoom's random number generator.
+	COMPATF2_NOMBF21		= 1 << 14,	// disable MBF21 features that may clash with certain maps
+	COMPATF2_OLD_RANDOM_GENERATOR	= 1 << 15,	// [BB] Use Doom's random table instead of ZDoom's random number generator.
 
 };
 

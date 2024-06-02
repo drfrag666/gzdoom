@@ -78,6 +78,30 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraToTexture, SetCameraToTexture)
 	return 0;
 }
 
+static void SetCameraTextureAspectRatio(const FString &texturename, double aspectScale, bool useTextureRatio)
+{
+	FTextureID textureid = TexMan.CheckForTexture(texturename, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
+	if (textureid.isValid())
+	{
+		// Only proceed if the texture actually has a canvas.
+		auto tex = TexMan.GetGameTexture(textureid);
+		if (tex && tex->isHardwareCanvas())
+		{
+			static_cast<FCanvasTexture *>(tex->GetTexture())->SetAspectRatio(aspectScale, useTextureRatio);
+		}
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraTextureAspectRatio, SetCameraTextureAspectRatio)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(texturename);
+	PARAM_FLOAT(aspect);
+	PARAM_BOOL(useTextureRatio);
+	SetCameraTextureAspectRatio(texturename, aspect, useTextureRatio);
+	return 0;
+}
+
 //=====================================================================================
 //
 // sector_t exports
@@ -446,6 +470,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetTerrain, GetTerrain)
 	ACTION_RETURN_INT(GetTerrain(self, pos));
 }
 
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetFloorTerrain, GetFloorTerrain_S)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(pos);
+	ACTION_RETURN_POINTER(GetFloorTerrain_S(self, pos));
+}
 
 DEFINE_ACTION_FUNCTION_NATIVE(_Sector, CheckPortalPlane, CheckPortalPlane)
 {

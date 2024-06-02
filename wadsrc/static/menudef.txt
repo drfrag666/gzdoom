@@ -454,6 +454,7 @@ OptionMenu "NewPlayerMenu" protected
 	PlayerSkinItem "$PLYRMNU_PLAYERSKIN", "PlayerSkin"
 	PlayerGenderItem "$PLYRMNU_PLAYERGENDER", "Gender"
 	AutoaimSlider "$PLYRMNU_AUTOAIM"
+	Option "$PLYRMNU_VERTSPREAD", vertspread, "OnOff"
 	PlayerSwitchOnPickupItem "$PLYRMNU_SWITCHONPICKUP", "OffOn"
 	Option "$PLYRMNU_ALWAYSRUN", cl_run, "OnOff"
 	Class "NewPlayerMenu"
@@ -499,6 +500,7 @@ ListMenu "PlayerMenu"
 	ValueText "$PLYRMNU_PLAYERSKIN", "Skin"
 	ValueText "$PLYRMNU_PLAYERGENDER", "Gender", "Gender"
 	Slider "$PLYRMNU_AUTOAIM", "Autoaim", 0, 35, 1
+	ValueText "$PLYRMNU_VERTSPREAD", vertspread, "OnOff"
 	ValueText "$PLYRMNU_SWITCHONPICKUP", "Switch", "OffOn"
 	ValueText "$PLYRMNU_ALWAYSRUN", "AlwaysRun", "OnOff"
 	Class "PlayerMenu"
@@ -963,7 +965,6 @@ OptionMenu "VideoOptions" protected
 	Option "$DSPLYMNU_WIPETYPE",				"wipetype", "Wipes"
 	Option "$DSPLYMNU_DRAWFUZZ",				"r_drawfuzz", "Fuzziness"
 	Option "$DSPLYMNU_OLDTRANS",				"r_vanillatrans", "VanillaTrans"
-	Slider "$DSPLYMNU_TRANSSOUL",				"transsouls", 0.25, 1.0, 0.05, 2
 	Option "$DSPLYMNU_FAKECONTRAST",			"r_fakecontrast", "Contrast"
 	Option "$DSPLYMNU_ROCKETTRAILS",			"cl_rockettrails", "RocketTrailTypes"
 	Option "$DSPLYMNU_BLOODTYPE",				"cl_bloodtype", "BloodTypes"
@@ -1174,6 +1175,7 @@ OptionMenu "AltHUDOptions" protected
 	Option "$ALTHUDMNU_SHOWSTATS",				"hud_showstats", "OnOff"
 	Option "$ALTHUDMNU_SHOWBERSERK",			"hud_berserk_health", "OnOff"
 	Option "$ALTHUDMNU_SHOWWEAPONS",			"hud_showweapons", "OnOff"
+	Option "$ALTHUDMNU_SHOWTIMESTAT",			"hud_showtimestat", "OnOff"
 	Option "$ALTHUDMNU_SHOWAMMO",				"hud_showammo", "AltHUDAmmo"
 	Option "$ALTHUDMNU_SHOWTIME",				"hud_showtime", "AltHUDTime"
 	Option "$ALTHUDMNU_TIMECOLOR",				"hud_timecolor", "TextColors"
@@ -1666,6 +1668,7 @@ OptionMenu GameplayOptions protected
 	Option "$GMPLYMNU_INSTANTREACTION",			"sv_instantreaction", "YesNo"
 	Option "$GMPLYMNU_DEGENERATION",			"sv_degeneration", "YesNo"
 	Option "$GMPLYMNU_NOAUTOAIM",				"sv_noautoaim", "NoYes"
+	Option "$GMPLYMNU_NOVERTSPREAD",			"sv_novertspread", "NoYes"
 	Option "$GMPLYMNU_ALLOWSUICIDE",			"sv_disallowsuicide", "NoYes"
 	Option "$GMPLYMNU_ALLOWJUMP",				"sv_jump", "JumpCrouchFreeLook"
 	Option "$GMPLYMNU_ALLOWCROUCH",				"sv_crouch", "JumpCrouchFreeLook"
@@ -1800,6 +1803,7 @@ OptionMenu "CompatMapMenu" protected
 	Option "$CMPTMNU_PUSHWINDOW",					"compat_pushwindow", "YesNo"
 	Option "$CMPTMNU_CHECKSWITCHRANGE",				"compat_checkswitchrange", "YesNo"
 	Option "$CMPTMNU_RAILINGHACK",					"compat_railing", "YesNo"
+	Option "$CMPTMNU_NOMBF21",						"compat_nombf21", "YesNo"
 	Class "CompatibilityMenu"
 }
 
@@ -2126,7 +2130,7 @@ OptionMenu ModReplayerOptions protected
 	Title "$ADVSNDMNU_TIMIDITY"
 	LabeledSubMenu "$ADVSNDMNU_SELCONFIG",		"timidity_config", "TimidityConfigMenu"
 	Option "$ADVSNDMNU_REVERB", 			"timidity_reverb", "TimidityReverb"
-	Slider "$ADVSNDMNU_REVERB_LEVEL", 		"timidity_reverb_level", 9, 127, 1, 0
+	Slider "$ADVSNDMNU_REVERB_LEVEL", 		"timidity_reverb_level", 0, 127, 1, 0
 	Option "$ADVSNDMNU_CHORUS", 			"timidity_chorus", "OnOff"
 	// other CVARs need to be revieved for usefulness
  }

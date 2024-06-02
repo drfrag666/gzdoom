@@ -56,9 +56,6 @@ struct FLatchedValue
 
 static TArray<FLatchedValue> LatchedValues;
 
-bool FBaseCVar::m_DoNoSet = false;
-bool FBaseCVar::m_UseCallback = false;
-
 FBaseCVar *CVars = NULL;
 
 int cvar_defflags;
@@ -144,6 +141,28 @@ FBaseCVar::~FBaseCVar ()
 		if (var->Flags & CVAR_AUTO)
 			C_RemoveTabCommand(VarName);
 	}
+}
+
+void FBaseCVar::SetCallback(void (*callback)(FBaseCVar&))
+{
+	m_Callback = callback;
+	m_UseCallback = true;
+}
+
+void FBaseCVar::ClearCallback()
+{
+	m_Callback = nullptr;
+	m_UseCallback = false;
+}
+
+void FBaseCVar::SetExtraDataPointer(void *pointer)
+{
+	m_ExtraDataPointer = pointer;
+}
+
+void* FBaseCVar::GetExtraDataPointer()
+{
+	return m_ExtraDataPointer;
 }
 
 const char *FBaseCVar::GetHumanString(int precision) const
@@ -502,6 +521,7 @@ void FBaseCVar::EnableNoSet ()
 
 void FBaseCVar::EnableCallbacks ()
 {
+	m_inEnable = true;
 	m_UseCallback = true;
 	FBaseCVar *cvar = CVars;
 
@@ -513,6 +533,7 @@ void FBaseCVar::EnableCallbacks ()
 		}
 		cvar = cvar->m_Next;
 	}
+	m_inEnable = false;
 }
 
 void FBaseCVar::DisableCallbacks ()
