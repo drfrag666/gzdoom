@@ -750,7 +750,6 @@ OptionMenu "MouseOptions" protected
 	StaticText 	""
 	Slider "$MOUSEMNU_SENSITIVITY_X",	"m_sensitivity_x", 0.5, 8, 0.25
 	Slider "$MOUSEMNU_SENSITIVITY_Y",	"m_sensitivity_y", 0.5, 8, 0.25
-	Option "$MOUSEMNU_SMOOTHMOUSE",		"m_filter", "YesNo"
 	StaticText 	""
 	Slider "$MOUSEMNU_TURNSPEED",		"m_yaw", 0, 2.5, 0.1
 	Slider "$MOUSEMNU_MOUSELOOKSPEED",	"m_pitch", 0, 2.5, 0.1
@@ -1764,7 +1763,7 @@ OptionMenu "CompatActorMenu" protected
 {
 	Position -35
 	Title "$CMPTMNU_ACTORBEHAVIOR"
-	Option "$CMPTMNU_CORPSEGIBS",					"compat_CORPSEGIBS", "YesNo"
+	Option "$CMPTMNU_VILEGHOSTS",					"compat_VILEGHOSTS", "YesNo"
 	Option "$CMPTMNU_NOBLOCKFRIENDS",				"compat_NOBLOCKFRIENDS", "YesNo"
 	Option "$CMPTMNU_LIMITPAIN",					"compat_LIMITPAIN", "YesNo"
 	Option "$CMPTMNU_MBFMONSTERMOVE",				"compat_MBFMONSTERMOVE", "YesNo"
@@ -1843,7 +1842,6 @@ OptionMenu "CompatSoundMenu" protected
 	Option "$CMPTMNU_SILENTPICKUP",					"compat_SILENTPICKUP", "YesNo"
 	Option "$CMPTMNU_SILENTINSTANTFLOORS",			"compat_silentinstantfloors", "YesNo"
 	Option "$CMPTMNU_SECTORSOUNDS",					"compat_SECTORSOUNDS", "YesNo"
-	Option "$CMPTMNU_SOUNDCUTOFF",					"compat_soundcutoff", "YesNo"
 	Option "$CMPTMNU_SOUNDTARGET",					"compat_SOUNDTARGET", "YesNo"
 	Class "CompatibilityMenu"
 }
@@ -2800,6 +2798,7 @@ OptionString "LanguageOptions"
 	"es", "Español (España) (Castilian Spanish)"
 	"esm", "Español (Latino) (Latin American Spanish)"
 	"fr", "Français (French)"
+	"hu", "Magyar (Hungarian)"
 	"it", "Italiano (Italian)"
 	"ptg", "Português (European Portuguese)"
 	"pt", "Português do Brasil (Brazilian Portuguese)"

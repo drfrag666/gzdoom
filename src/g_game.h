@@ -107,6 +107,9 @@ void G_AddViewAngle (int yaw, bool mouse = false);
 class FBaseCVar;
 FBaseCVar* G_GetUserCVar(int playernum, const char* cvarname);
 
+class DIntermissionController;
+void RunIntermission(DIntermissionController* intermissionScreen, DObject* statusScreen, std::function<void(bool)> completionf);
+
 extern const AActor *SendItemUse, *SendItemDrop;
 extern int SendItemDropAmount;
 extern bool doquicksave;
