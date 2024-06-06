@@ -173,7 +173,6 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
   Tics(0),
   Translation(0),
   Flags(0),
-  Caller(caller),
   Owner(owner),
   State(nullptr),
   Sprite(0),
@@ -181,6 +180,7 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
   ID(id),
   processPending(true)
 {
+	Caller = caller;
 	baseScale = {1.0, 1.2};
 	rotation = 0.;
 	scale = {1.0, 1.0};
@@ -1198,6 +1198,7 @@ DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimfla
 	DAngle pitch;
 	FTranslatedLineTarget scratch;
 
+	aimflags &= ~ALF_IGNORENOAUTOAIM; // just to be safe.
 	if (pLineTarget == NULL) pLineTarget = &scratch;
 	// see which target is to be aimed at
 	i = 2;

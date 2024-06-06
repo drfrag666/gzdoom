@@ -3265,6 +3265,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		Level->FinalizePortals();	// finalize line portals after polyobjects have been initialized. This info is needed for properly flagging them.
 
 	Level->aabbTree = new DoomLevelAABBTree(Level);
+	Level->levelMesh = new DoomLevelMesh(*Level);
 }
 
 //==========================================================================

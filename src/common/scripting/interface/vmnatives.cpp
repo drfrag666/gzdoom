@@ -1009,6 +1009,18 @@ DEFINE_ACTION_FUNCTION(_Console, Printf)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(_Console, PrintfEx)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(printlevel);
+	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
+
+	FString s = FStringFormat(VM_ARGS_NAMES,1);
+
+	Printf(printlevel,"%s\n", s.GetChars());
+	return 0;
+}
+
 static void StopAllSounds()
 {
 	soundEngine->StopAllChannels();
@@ -1055,7 +1067,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_System, MusicEnabled, MusicEnabled)
 	ACTION_RETURN_INT(MusicEnabled());
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(_System, GetTimeFrac, I_GetTimeFrac)
+static double Jit_GetTimeFrac() // cannot use I_GetTimwfrac directly due to default arguments.
+{
+	return I_GetTimeFrac();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_System, GetTimeFrac, Jit_GetTimeFrac)
 {
 	ACTION_RETURN_FLOAT(I_GetTimeFrac());
 }

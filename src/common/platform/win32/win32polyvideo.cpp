@@ -4,12 +4,11 @@
 #include "engineerrors.h"
 #include "v_text.h"
 #include <Windows.h>
+#include "i_mainwindow.h"
 
 EXTERN_CVAR(Bool, vid_vsync)
 
 bool ViewportLinearScale();
-
-extern HWND Window;
 
 #include <d3d9.h>
 #pragma comment(lib, "d3d9.lib")
@@ -90,7 +89,7 @@ void I_PolyPresentInit()
 	}
 
 	RECT rect = {};
-	GetClientRect(Window, &rect);
+	GetClientRect(mainwindow.GetHandle(), &rect);
 
 	ClientWidth = rect.right;
 	ClientHeight = rect.bottom;
@@ -101,19 +100,19 @@ void I_PolyPresentInit()
 	pp.BackBufferWidth = ClientWidth;
 	pp.BackBufferHeight = ClientHeight;
 	pp.BackBufferCount = 1;
-	pp.hDeviceWindow = Window;
+	pp.hDeviceWindow = mainwindow.GetHandle();
 	pp.PresentationInterval = CurrentVSync ? (d3dexavailable ? D3DPRESENT_INTERVAL_DEFAULT : D3DPRESENT_INTERVAL_ONE) : D3DPRESENT_INTERVAL_IMMEDIATE;
 
 	HRESULT result;
 	if (d3dexavailable)
 	{
-		result = d3d9ex->CreateDeviceEx(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window, D3DCREATE_HARDWARE_VERTEXPROCESSING, &pp, nullptr, &deviceex);
+		result = d3d9ex->CreateDeviceEx(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, mainwindow.GetHandle(), D3DCREATE_HARDWARE_VERTEXPROCESSING, &pp, nullptr, &deviceex);
 	}
 	else
 	{
-		result = d3d9->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window, D3DCREATE_HARDWARE_VERTEXPROCESSING, &pp, &device);
+		result = d3d9->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, mainwindow.GetHandle(), D3DCREATE_HARDWARE_VERTEXPROCESSING, &pp, &device);
 		if (FAILED(result) && (result != D3DERR_DEVICELOST || device == NULL))
-			result = d3d9->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &pp, &device);
+			result = d3d9->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, mainwindow.GetHandle(), D3DCREATE_SOFTWARE_VERTEXPROCESSING, &pp, &device);
 	}
 	if (FAILED(result))
 	{
@@ -129,7 +128,7 @@ uint8_t *I_PolyPresentLock(int w, int h, bool vsync, int &pitch)
 	HRESULT result;
 
 	RECT rect = {};
-	GetClientRect(Window, &rect);
+	GetClientRect(mainwindow.GetHandle(), &rect);
 	if (rect.right != ClientWidth || rect.bottom != ClientHeight || CurrentVSync != vsync)
 	{
 		if (surface)
@@ -148,7 +147,7 @@ uint8_t *I_PolyPresentLock(int w, int h, bool vsync, int &pitch)
 		pp.BackBufferWidth = ClientWidth;
 		pp.BackBufferHeight = ClientHeight;
 		pp.BackBufferCount = 1;
-		pp.hDeviceWindow = Window;
+		pp.hDeviceWindow = mainwindow.GetHandle();
 		pp.PresentationInterval = CurrentVSync ? (d3dexavailable ? D3DPRESENT_INTERVAL_DEFAULT : D3DPRESENT_INTERVAL_ONE) : D3DPRESENT_INTERVAL_IMMEDIATE;
 		d3dexavailable ? deviceex->Reset(&pp) : device->Reset(&pp);
 	}
@@ -279,12 +278,12 @@ void I_PresentPolyImage(int w, int h, const void *pixels)
 	info.bV5CSType = LCS_WINDOWS_COLOR_SPACE;
 
 	RECT box = {};
-	GetClientRect(Window, &box);
+	GetClientRect(mainwindow.GetHandle(), &box);
 
-	HDC dc = GetDC(Window);
+	HDC dc = GetDC(mainwindow.GetHandle());
 	if (box.right == w && box.bottom == h)
 		SetDIBitsToDevice(dc, 0, 0, w, h, 0, 0, 0, h, pixels, (const BITMAPINFO *)&info, DIB_RGB_COLORS);
 	else
 		StretchDIBits(dc, 0, 0, box.right, box.bottom, 0, 0, w, h, pixels, (const BITMAPINFO *)&info, DIB_RGB_COLORS, SRCCOPY);
-	ReleaseDC(Window, dc);
+	ReleaseDC(mainwindow.GetHandle(), dc);
 }

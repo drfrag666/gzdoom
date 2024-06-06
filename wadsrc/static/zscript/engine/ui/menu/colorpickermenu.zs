@@ -79,14 +79,14 @@ class ColorpickerMenu : OptionMenu
 		double v = index == 0? mRed : index == 1? mGreen : mBlue;
 		return v;
 	}
-	
+
 	void SetColor(int index, double val)
 	{
 		if (index == 0) mRed = val;
 		else if (index == 1) mGreen = val;
 		else mBlue = val;
 	}
-	
+
 	//=============================================================================
 	//
 	//
@@ -119,7 +119,7 @@ class ColorpickerMenu : OptionMenu
 		mDesc.mIndent = 0;
 		mDesc.CalcIndent();
 	}
-	
+
 	//=============================================================================
 	//
 	//
@@ -274,7 +274,7 @@ class ColorpickerMenu : OptionMenu
 
 		if (h > fh) h = fh;
 		else if (h < 4) return;	// no space to draw it.
-		
+
 		int indent = (screen.GetWidth() / 2);
 		int p = 0;
 
@@ -329,7 +329,7 @@ class ColorpickerMenu : OptionMenu
 		y += 49*CleanYfac_1;
 		screen.DrawText (SmallFont, Font.CR_GRAY, x+(48-SmallFont.StringWidth("---->")/2)*CleanXfac_1, y, "---->", DTA_CleanNoMove_1, true);
 	}
-	
+
 	override void OnDestroy()
 	{
 		if (mStartItem >= 0)

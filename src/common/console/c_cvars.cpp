@@ -56,9 +56,6 @@ struct FLatchedValue
 
 static TArray<FLatchedValue> LatchedValues;
 
-bool FBaseCVar::m_DoNoSet = false;
-bool FBaseCVar::m_UseCallback = false;
-
 FBaseCVar *CVars = NULL;
 
 int cvar_defflags;

@@ -87,7 +87,7 @@ class LoadSaveMenu : ListMenu
 	int listboxLeft;
 	int listboxTop;
 	int listboxWidth;
-	
+
 	int listboxRows;
 	int listboxHeight;
 	int listboxRight;
@@ -101,10 +101,10 @@ class LoadSaveMenu : ListMenu
 	bool mEntering;
 	TextEnterMenu mInput;
 	double FontScale;
-	
+
 	BrokenLines BrokenSaveComment;
 
-	
+
 
 	//=============================================================================
 	//
@@ -119,13 +119,13 @@ class LoadSaveMenu : ListMenu
 		manager.ReadSaveStrings();
 		SetWindows();
 	}
-	
+
 	private void SetWindows()
 	{
 		bool aspect43 = true;
 		int Width43 = screen.GetHeight() * 4 / 3;
 		int Left43 = (screen.GetWidth() - Width43) / 2;
-		
+
 		double wScale = Width43 / 640.;
 
 		savepicLeft = Left43 + int(20 * wScale);
@@ -151,7 +151,7 @@ class LoadSaveMenu : ListMenu
 		commentRows = commentHeight / rowHeight;
 	}
 
-	
+
 	//=============================================================================
 	//
 	//
@@ -203,7 +203,7 @@ class LoadSaveMenu : ListMenu
 				String text = (Selected == -1 || !manager.GetSavegame(Selected).bOldVersion)? Stringtable.Localize("$MNU_NOPICTURE") : Stringtable.Localize("$MNU_DIFFVERSION");
 				let font = ui_classic? SmallFont : NewSmallFont;
 				int textlen = font.StringWidth(text);
-				
+
 				screen.DrawText (font, Font.CR_GOLD, (savepicLeft + savepicWidth / 2) / FontScale - textlen/2,
 					(savepicTop+(savepicHeight-rowHeight)/2) / FontScale, text, DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale, DTA_KeepRatio, true);
 			}
@@ -221,6 +221,7 @@ class LoadSaveMenu : ListMenu
 				BrokenSaveComment.StringAt(i),
 				DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale, DTA_KeepRatio, true);
 		}
+
 
 		// Draw file area
 		DrawFrame (listboxLeft, listboxTop, listboxWidth, listboxHeight);
@@ -259,7 +260,7 @@ class LoadSaveMenu : ListMenu
 			}
 
 			screen.SetClipRect(listboxLeft, listboxTop+rowHeight*i, listboxRight, listboxTop+rowHeight*(i+1));
-			
+
 			if (j == Selected)
 			{
 				screen.Clear (listboxLeft, listboxTop+rowHeight*i, listboxRight, listboxTop+rowHeight*(i+1), mEntering ? Color(255,255,0,0) : Color(255,0,0,255));
@@ -391,7 +392,7 @@ class LoadSaveMenu : ListMenu
 			return Super.MenuEvent(mkey, fromcontroller);
 		}
 	}
-	
+
 	//=============================================================================
 	//
 	//
@@ -425,8 +426,8 @@ class LoadSaveMenu : ListMenu
 
 		return Super.MouseEvent(type, x, y);
 	}
-	
-	
+
+
 	//=============================================================================
 	//
 	//
@@ -469,13 +470,13 @@ class LoadSaveMenu : ListMenu
 		return Super.OnUIEvent(ev);
 	}
 
-	
+
 }
 
 class SaveMenu : LoadSaveMenu
 {
 	String mSaveName;
-	
+
 	//=============================================================================
 	//
 	//
@@ -511,7 +512,7 @@ class SaveMenu : LoadSaveMenu
 	//
 	//
 	//=============================================================================
-	
+
 	override bool MenuEvent (int mkey, bool fromcontroller)
 	{
 		if (Super.MenuEvent(mkey, fromcontroller)) 
@@ -606,7 +607,7 @@ class SaveMenu : LoadSaveMenu
 			mSaveName = "";
 		}
 	}
-	
+
 }
 
 //=============================================================================

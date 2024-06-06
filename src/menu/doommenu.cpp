@@ -56,7 +56,7 @@
 #include "g_level.h"
 #include "d_event.h"
 #include "p_tick.h"
-#include "st_start.h"
+#include "startscreen.h"
 #include "d_main.h"
 #include "i_system.h"
 #include "doommenu.h"
@@ -65,6 +65,7 @@
 #include "d_player.h"
 #include "teaminfo.h"
 #include "i_time.h"
+#include "shiftstate.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 
 EXTERN_CVAR(Int, cl_gfxlocalization)
@@ -72,6 +73,7 @@ EXTERN_CVAR(Bool, m_quickexit)
 EXTERN_CVAR(Bool, saveloadconfirmation) // [mxd]
 EXTERN_CVAR(Bool, quicksaverotation)
 EXTERN_CVAR(Bool, show_messages)
+EXTERN_CVAR(Float, hud_scalefactor)
 
 CVAR(Bool, m_simpleoptions, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -506,14 +508,28 @@ EXTERN_CVAR (Int, screenblocks)
 
 CCMD (sizedown)
 {
-	screenblocks = screenblocks - 1;
+	if (shiftState.ShiftPressed())
+	{
+		hud_scalefactor = hud_scalefactor - 0.04f;
+	}
+	else
+	{
+		screenblocks = screenblocks - 1;
+	}
 	S_Sound (CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 CCMD (sizeup)
 {
-	screenblocks = screenblocks + 1;
-	S_Sound (CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+	if (shiftState.ShiftPressed())
+	{
+		hud_scalefactor = hud_scalefactor + 0.04f;
+	}
+	else
+	{
+		screenblocks = screenblocks + 1;
+	}
+	S_Sound(CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 CCMD(reset2defaults)

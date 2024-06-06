@@ -159,13 +159,6 @@ FPlayerClass::FPlayerClass ()
 	Flags = 0;
 }
 
-FPlayerClass::FPlayerClass (const FPlayerClass &other)
-{
-	Type = other.Type;
-	Flags = other.Flags;
-	Skins = other.Skins;
-}
-
 FPlayerClass::~FPlayerClass ()
 {
 }
@@ -978,8 +971,8 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, DVector2 &scale)
 	{
 		// Convert from default scale to skin scale.
 		DVector2 defscale = actor->GetDefault()->Scale;
-		scale.X *= Skins[player->userinfo.GetSkin()].Scale.X / defscale.X;
-		scale.Y *= Skins[player->userinfo.GetSkin()].Scale.Y / defscale.Y;
+		scale.X *= Skins[player->userinfo.GetSkin()].Scale.X / double(defscale.X);
+		scale.Y *= Skins[player->userinfo.GetSkin()].Scale.Y / double(defscale.Y);
 	}
 
 	// Set the crouch sprite?

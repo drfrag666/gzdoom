@@ -59,10 +59,6 @@
 #include "swrenderer/things/r_playersprite.h"
 #include <chrono>
 
-#ifdef WIN32
-void PeekThreadedErrorPane();
-#endif
-
 EXTERN_CVAR(Int, r_clearbuffer)
 EXTERN_CVAR(Int, r_debug_draw)
 
@@ -239,12 +235,7 @@ namespace swrenderer
 			finished_threads++;
 			if (!end_condition.wait_for(end_lock, 5s, [&]() { return finished_threads == Threads.size(); }))
 			{
-#ifdef WIN32
-				PeekThreadedErrorPane();
-#endif
-				// Invoke the crash reporter so that we can capture the call stack of whatever the hung worker thread is doing
-				int *threadCrashed = nullptr;
-				*threadCrashed = 0xdeadbeef;
+				I_FatalError("Render threads did not finish within 5 seconds!");
 			}
 			finished_threads = 0;
 		}
@@ -430,7 +421,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	ADD_STAT(fps)
+	ADD_STAT(swfps)
 	{
 		FString out;
 		out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms",
@@ -441,7 +432,7 @@ namespace swrenderer
 	static double f_acc, w_acc, p_acc, m_acc;
 	static int acc_c;
 
-	ADD_STAT(fps_accumulated)
+	ADD_STAT(swfps_accumulated)
 	{
 		f_acc += FrameCycles.TimeMS();
 		w_acc += WallCycles.TimeMS();

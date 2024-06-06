@@ -737,7 +737,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		return;
 
 	int spritenum = thing->sprite;
-	DVector2 sprscale = thing->Scale;
+	DVector2 sprscale(thing->Scale.X, thing->Scale.Y);
 	if (thing->player != nullptr)
 	{
 		P_CheckPlayerSprite(thing, spritenum, sprscale);
@@ -751,6 +751,17 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	if ((thing->flags8 & MF8_MASTERNOSEE) && thing->master != nullptr)
 	{
 		viewmaster = thing->master;
+	}
+
+	// [Nash] filter visibility in mirrors
+	bool isInMirror = di->mCurrentPortal && (di->mCurrentPortal->mState->MirrorFlag > 0 || di->mCurrentPortal->mState->PlaneMirrorFlag > 0);
+	if (thing->renderflags2 & RF2_INVISIBLEINMIRRORS && isInMirror)
+	{
+		return;
+	}
+	else if (thing->renderflags2 & RF2_ONLYVISIBLEINMIRRORS && !isInMirror)
+	{
+		return;
 	}
 
 	// Some added checks if the camera actor is not supposed to be seen. It can happen that some portal setup has this actor in view in which case it may not be skipped here
@@ -1015,7 +1026,6 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	// light calculation
 
 	bool enhancedvision = false;
-	const bool UseActorLight = (thing->LightLevel > -1);
 
 	// allow disabling of the fullbright flag by a brightmap definition
 	// (e.g. to do the gun flashes of Doom's zombies correctly.
@@ -1023,23 +1033,9 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		((thing->renderflags & RF_FULLBRIGHT) && (!texture || !texture->isFullbrightDisabled()));
 
 	if (fullbright)	lightlevel = 255;
-	else if (UseActorLight)
-	{
-		int newlevel = thing->LightLevel;
-		if (thing->flags8 & MF8_ADDLIGHTLEVEL)
-		{
-			newlevel += hw_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ?
-				rendersector->GetCeilingLight() : rendersector->GetFloorLight());
+	else lightlevel = hw_ClampLight(thing->GetLightLevel(rendersector));
 
-			newlevel = clamp(newlevel, 0, 255);
-		}
-		lightlevel = newlevel;
-	}
-	else
-		lightlevel = hw_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ?
-			rendersector->GetCeilingLight() : rendersector->GetFloorLight());
-
-	foglevel = (uint8_t)clamp<short>((UseActorLight) ? lightlevel : rendersector->lightlevel, 0, 255);
+	foglevel = (uint8_t)clamp<short>(rendersector->lightlevel, 0, 255); // this *must* use the sector's light level or the fog will just look bad.
 
 	lightlevel = rendersector->CheckSpriteGlow(lightlevel, thingpos);
 
@@ -1252,8 +1248,7 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 {
 	if (particle->alpha==0) return;
 
-	lightlevel = hw_ClampLight(sector->GetTexture(sector_t::ceiling) == skyflatnum ? 
-		sector->GetCeilingLight() : sector->GetFloorLight());
+	lightlevel = hw_ClampLight(sector->GetSpriteLight());
 	foglevel = (uint8_t)clamp<short>(sector->lightlevel, 0, 255);
 
 	if (di->isFullbrightScene()) 

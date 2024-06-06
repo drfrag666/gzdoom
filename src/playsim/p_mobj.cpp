@@ -205,6 +205,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("scale", Scale)
 		A("renderstyle", RenderStyle)
 		A("renderflags", renderflags)
+		A("renderflags2", renderflags2)
 		A("picnum", picnum)
 		A("floorpic", floorpic)
 		A("ceilingpic", ceilingpic)
@@ -4273,7 +4274,7 @@ void AActor::CheckSectorTransition(sector_t *oldsec)
 //
 //==========================================================================
 
-int AActor::UpdateWaterDepth(bool splash)
+double AActor::UpdateWaterDepth(bool splash)
 {
 	double fh = -FLT_MAX;
 	bool reset = false;
@@ -4388,9 +4389,9 @@ void AActor::SplashCheck()
 
 bool AActor::UpdateWaterLevel(bool dosplash)
 {
-	if (dosplash) SplashCheck();
-
 	int oldlevel = waterlevel;
+
+	if (dosplash) SplashCheck();
 	UpdateWaterDepth(false);
 
 	// Play surfacing and diving sounds, as appropriate.
@@ -6911,6 +6912,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 	{
 		return nullptr;
 	}
+	aimflags &= ~ALF_IGNORENOAUTOAIM; // just to be safe.
 
 	static const double angdiff[3] = { -5.625, 5.625, 0 };
 	DAngle an = angle;

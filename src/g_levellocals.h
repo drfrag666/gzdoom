@@ -55,6 +55,7 @@
 #include "r_data/r_canvastexture.h"
 #include "r_data/r_interpolate.h"
 #include "doom_aabbtree.h"
+#include "doom_levelmesh.h"
 
 EXTERN_CVAR(Int, compatmode)
 EXTERN_CVAR(Bool, netcompat)
@@ -480,6 +481,7 @@ public:
 	FCanvasTextureInfo canvasTextureInfo;
 	EventManager *localEventManager = nullptr;
 	DoomLevelAABBTree* aabbTree = nullptr;
+	DoomLevelMesh* levelMesh = nullptr;
 
 	// [ZZ] Destructible geometry information
 	TMap<int, FHealthGroup> healthGroups;
@@ -544,7 +546,7 @@ public:
 
 	static const int BODYQUESIZE = 32;
 	TObjPtr<AActor*> bodyque[BODYQUESIZE];
-	TObjPtr<DAutomapBase*> automap = nullptr;
+	TObjPtr<DAutomapBase*> automap = MakeObjPtr<DAutomapBase*>(nullptr);
 	int bodyqueslot;
 	
 	// For now this merely points to the global player array, but with this in place, access to this array can be moved over to the level.
@@ -694,10 +696,10 @@ public:
 
 	// links to global game objects
 	TArray<TObjPtr<AActor *>> CorpseQueue;
-	TObjPtr<DFraggleThinker *> FraggleScriptThinker = nullptr;
-	TObjPtr<DACSThinker*> ACSThinker = nullptr;
+	TObjPtr<DFraggleThinker *> FraggleScriptThinker = MakeObjPtr<DFraggleThinker*>(nullptr);
+	TObjPtr<DACSThinker*> ACSThinker = MakeObjPtr<DACSThinker*>(nullptr);
 
-	TObjPtr<DSpotState *> SpotState = nullptr;
+	TObjPtr<DSpotState *> SpotState = MakeObjPtr<DSpotState*>(nullptr);
 
 	//==========================================================================
 	//

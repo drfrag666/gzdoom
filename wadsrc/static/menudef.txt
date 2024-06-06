@@ -1253,6 +1253,7 @@ OptionMenu "MiscOptions" protected
 	Option "$MISCMNU_ENABLESCRIPTSCREENSHOTS",	"enablescriptscreenshot", "OnOff"
 	Option "$MISCMNU_SETSLOTSTRICT",			"setslotstrict", "YesNo"
 	Option "$MISCMNU_INTERSCROLL",				"nointerscrollabort", "OffOn"
+	Option "$MISCMNU_PAUSEINBACKGROUND",		"i_pauseinbackground", "OnOff"
 	StaticText " "
 	Option "$MISCMNU_CACHENODES",				"gl_cachenodes", "OnOff"
 	Slider "$MISCMNU_CACHETIME",				"gl_cachetime", 0.0, 2.0, 0.1
@@ -1264,10 +1265,9 @@ OptionMenu "MiscOptions" protected
 	StaticText " "
 	Option "$MISCMNU_QUICKEXIT",				"m_quickexit", "OnOff"
 
-	IfOption(Windows)
-	{
-		Option	"$DSPLYMNU_SHOWENDOOM",			"showendoom", "Endoom"
-	}
+	StaticText " "
+	Option	"$DSPLYMNU_SHOWENDOOM",			"showendoom", "Endoom"
+
 	StaticText " "
 	Option "$MISCMNU_CLEANMENU",				"m_cleanscale", "OffOn"
 	Option "$MISCMNU_CLEANSTAT",				"wi_cleantextscale", "OnOff"

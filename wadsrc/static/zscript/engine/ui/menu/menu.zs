@@ -76,14 +76,14 @@ struct JoystickConfig native version("2.4")
 
 	native float GetAxisDeadZone(int axis);
 	native void SetAxisDeadZone(int axis, float zone);
-	
+
 	native int GetAxisMap(int axis);
 	native void SetAxisMap(int axis, int gameaxis);
-	
+
 	native String GetName();
 	native int GetNumAxes();
 	native String GetAxisName(int axis);
-	
+
 }
 
 class Menu : Object native ui version("2.4")
@@ -141,7 +141,7 @@ class Menu : Object native ui version("2.4")
 	native void ActivateMenu();
 
 	private native static void MakeScreenShot();
-	
+
 	//=============================================================================
 	//
 	//
@@ -158,7 +158,7 @@ class Menu : Object native ui version("2.4")
 		AnimatedTransition = false;
 		Animated = false;
 	}
-	
+
 	//=============================================================================
 	//
 	//
@@ -232,7 +232,7 @@ class Menu : Object native ui version("2.4")
 			{
 				SetCapture(true);
 			}
-			
+
 		}
 		else if (ev.type == UIEvent.Type_MouseMove)
 		{
@@ -266,7 +266,7 @@ class Menu : Object native ui version("2.4")
 	{ 
 		return false;
 	}
-	
+
 	//=============================================================================
 	//
 	//
@@ -296,7 +296,7 @@ class Menu : Object native ui version("2.4")
 			}
 		}
 	}
-	
+
 	//=============================================================================
 	//
 	//

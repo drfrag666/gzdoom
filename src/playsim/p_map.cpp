@@ -4198,7 +4198,7 @@ struct aim_t
 			dist = attackrange * in->frac;
 
 			// Don't autoaim certain special actors
-			if (!cl_doautoaim && th->flags6 & MF6_NOTAUTOAIMED)
+			if (!cl_doautoaim && !(flags & ALF_IGNORENOAUTOAIM) && th->flags6 & MF6_NOTAUTOAIMED)
 			{
 				continue;
 			}
@@ -5335,6 +5335,7 @@ void P_RailAttack(FRailParams *p)
 
 		int actorpuffflags = puffflags | PF_HITTHING;
 		AActor *hitactor = rail_data.RailHits[i].HitActor;
+		AActor *hitpuff = NULL;
 		DVector3 &hitpos = rail_data.RailHits[i].HitPos;
 		DAngle hitangle = rail_data.RailHits[i].HitAngle;
 
@@ -5354,21 +5355,25 @@ void P_RailAttack(FRailParams *p)
 		}
 		if (spawnpuff)
 		{
-			P_SpawnPuff(source, puffclass, hitpos, hitangle, hitangle - 90, 1, actorpuffflags, hitactor);
+			hitpuff = P_SpawnPuff(source, puffclass, hitpos, hitangle, hitangle - 90, 1, actorpuffflags, hitactor);
 		}
-		
+		// https://github.com/coelckers/gzdoom/pull/1668#pullrequestreview-1039431156
+		if (!hitpuff) {
+			hitpuff = thepuff;
+		}
+
 		int dmgFlagPass = DMG_INFLICTOR_IS_PUFF;
 		if (puffDefaults != NULL)	// is this even possible?
 		{
 			if (puffDefaults->PoisonDamage > 0 && puffDefaults->PoisonDuration != INT_MIN)
 			{
-				P_PoisonMobj(hitactor, thepuff ? thepuff : source, source, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod, puffDefaults->PoisonDamageType);
+				P_PoisonMobj(hitactor, hitpuff ? hitpuff : source, source, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod, puffDefaults->PoisonDamageType);
 			}
 			if (puffDefaults->flags3 & MF3_FOILINVUL) dmgFlagPass |= DMG_FOILINVUL;
 			if (puffDefaults->flags7 & MF7_FOILBUDDHA) dmgFlagPass |= DMG_FOILBUDDHA;
 		}
 		// [RK] If the attack source is a player, send the DMG_PLAYERATTACK flag.
-		int newdam = P_DamageMobj(hitactor, thepuff ? thepuff : source, source, p->damage, damagetype, dmgFlagPass | DMG_USEANGLE | (source->player ? DMG_PLAYERATTACK : 0), hitangle);
+		int newdam = P_DamageMobj(hitactor, hitpuff ? hitpuff : source, source, p->damage, damagetype, dmgFlagPass | DMG_USEANGLE | (source->player ? DMG_PLAYERATTACK : 0), hitangle);
 
 		if (bleed)
 		{
