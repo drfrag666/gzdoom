@@ -286,7 +286,7 @@ void V_UpdateModeSize (int width, int height)
 	
 	// clamp screen aspect ratio to 17:10, for anything wider the width will be reduced
 	double aspect = (double)w / h;
-	if (aspect > 1.7) w = int(w * 1.7 / aspect);
+	if (aspect > 1.7 && !ui_classic) w = int(w * 1.7 / aspect);
 	
 	int factor;
 
