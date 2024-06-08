@@ -94,7 +94,7 @@ CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	}
 }
 
-CUSTOM_CVAR(Int, vid_preferbackend, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Int, vid_preferbackend, 3, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	// [SP] This may seem pointless - but I don't want to implement live switching just
 	// yet - I'm pretty sure it's going to require a lot of reinits and destructions to
@@ -107,8 +107,8 @@ CUSTOM_CVAR(Int, vid_preferbackend, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_N
 		Printf("Selecting OpenGLES 2.0 backend...\n");
 		break;
 #endif
-	case 0:
-		Printf("Selecting OpenGL backend...\n");
+	case 2:
+		Printf("Selecting SoftPoly backend...\n");
 		break;
 #ifdef HAVE_VULKAN
 	case 1:
@@ -116,7 +116,7 @@ CUSTOM_CVAR(Int, vid_preferbackend, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_N
 		break;
 #endif
 	default:
-		Printf("Selecting SoftPoly backend...\n");
+		Printf("Selecting OpenGL backend...\n");
 	}
 
 	Printf("Changing the video backend requires a restart for " GAMENAME ".\n");
