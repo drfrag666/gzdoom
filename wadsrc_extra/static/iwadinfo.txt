@@ -502,6 +502,22 @@ IWad
 
 IWad
 {
+	Name = "Sigil II"
+	BannerColors = "FF 00 00", "40 40 40"
+	MustContain = "M_EPI6", "SKY6", "D_E6M1", "D_E6M9", "E6M1", "E6M9", "ZMAPINFO", "E6TEXT"
+	Load = "SIGIL_II_MP3_V1_0.WAD"
+	Required = "The Ultimate DOOM"
+	Autoname = "doom.id.doom1.sigil2"
+	Game = "Doom"
+	Config = "Doom"
+	IWADName = "SIGIL_II_V1_0.WAD"
+	Mapinfo = "mapinfo/ultdoom.txt"
+	Compatibility = "Shorttex"
+	IgnoreTitlePatches = 1
+}
+
+IWad
+{
 	Name = "DOOM 2: BFG Edition"
 	Autoname = "doom.id.doom2.bfg"
 	Game = "Doom"
