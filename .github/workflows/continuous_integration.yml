@@ -56,10 +56,10 @@ jobs:
           }
         - {
             name: "Linux GCC 9",
-          os: ubuntu-20.04,
-          extra_options: "-DCMAKE_C_COMPILER=gcc-9 -DCMAKE_CXX_COMPILER=g++-9",
-          deps_cmdline: "sudo apt update && sudo apt install g++-9 libsdl2-dev libvpx-dev libgtk2.0-dev",
-          build_type: "RelWithDebInfo"
+            os: ubuntu-20.04,
+            extra_options: "-DCMAKE_C_COMPILER=gcc-9 -DCMAKE_CXX_COMPILER=g++-9",
+            deps_cmdline: "sudo apt update && sudo apt install g++-9 libsdl2-dev libvpx-dev libgtk2.0-dev",
+            build_type: "RelWithDebInfo"
           }
         - {
             name: "Linux Clang 10",
