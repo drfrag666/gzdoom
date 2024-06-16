@@ -654,6 +654,7 @@ Names
 	"delaweare.wad"
 	"rotwb.wad"
 	"sigil_v1_21.wad"
+	"SIGIL_II_V1_0.WAD"
 	"nerve.wad"
 }
 
@@ -667,6 +668,7 @@ Order	// Order in the IWAD selection box
 	"Final Doom: TNT - Evilution"
 	"The Ultimate DOOM"
 	"Sigil of Baphomet"
+	"Sigil II"
 	"DOOM Registered"
 	"DOOM Shareware"
 	"DOOM 2: BFG Edition"
