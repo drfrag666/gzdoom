@@ -143,6 +143,7 @@ enum
 enum
 {
 //	DF2_YES_IMPALING		= 1 << 0,	// Player gets impaled on MF2_IMPALE items
+	DF2_DOUBLESPAWN			= 1 << 0,	// Spawn double the monsters
 	DF2_YES_WEAPONDROP		= 1 << 1,	// Drop current weapon upon death
 //	DF2_NO_RUNES			= 1 << 2,	// Don't spawn runes
 //	DF2_INSTANT_RETURN		= 1 << 3,	// Instantly return flags and skulls when player carrying it dies (ST/CTF)
@@ -173,7 +174,7 @@ enum
 	DF2_NO_COOP_THING_SPAWN	= 1 << 28,	// Don't spawn multiplayer things in coop games
 	DF2_ALWAYS_SPAWN_MULTI	= 1 << 29,	// Always spawn multiplayer items
 	DF2_NOVERTSPREAD		= 1 << 30,	// Don't allow vertical spread for hitscan weapons (excluding ssg)
-	DF2_DOUBLESPAWN			= 1 << 31,	// Spawn double the monsters
+	DF2_NO_EXTRA_AMMO		= 1 << 31,	// Don't add extra ammo when picking up weapons (like in original Doom)
 };
 
 // [RH] Compatibility flags.

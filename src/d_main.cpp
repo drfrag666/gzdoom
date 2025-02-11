@@ -543,6 +543,7 @@ CUSTOM_CVAR (Int, dmflags2, 0, CVAR_SERVERINFO | CVAR_NOINITCALL)
 	}
 }
 
+CVAR (Flag, sv_doublespawn,			dmflags2, DF2_DOUBLESPAWN);
 CVAR (Flag, sv_weapondrop,			dmflags2, DF2_YES_WEAPONDROP);
 CVAR (Flag, sv_noteamswitch,		dmflags2, DF2_NO_TEAM_SWITCH);
 CVAR (Flag, sv_doubleammo,			dmflags2, DF2_YES_DOUBLEAMMO);
@@ -569,7 +570,7 @@ CVAR (Flag, sv_respawnsuper,		dmflags2, DF2_RESPAWN_SUPER);
 CVAR (Flag, sv_nothingspawn,		dmflags2, DF2_NO_COOP_THING_SPAWN);
 CVAR (Flag, sv_alwaysspawnmulti,	dmflags2, DF2_ALWAYS_SPAWN_MULTI);
 CVAR (Flag, sv_novertspread,		dmflags2, DF2_NOVERTSPREAD);
-CVAR (Flag, sv_doublespawn,			dmflags2, DF2_DOUBLESPAWN);
+CVAR (Flag, sv_noextraammo,			dmflags2, DF2_NO_EXTRA_AMMO);
 
 //==========================================================================
 //
@@ -903,13 +904,13 @@ void D_Display ()
     auto &vp = r_viewpoint;
 	if (viewactive)
 	{
-		DAngle fov = 90.f;
+		DAngle fov = DAngle::fromDeg(90.);
 		AActor *cam = players[consoleplayer].camera;
 		if (cam)
 		{
 			if (cam->player)
-				fov = cam->player->FOV;
-			else fov = cam->CameraFOV;
+				fov = DAngle::fromDeg(cam->player->FOV);
+			else fov = DAngle::fromDeg(cam->CameraFOV);
 		}
 		R_SetFOV(vp, fov);
 	}
@@ -2765,7 +2766,7 @@ FString System_GetLocationDescription()
 	auto& vp = r_viewpoint;
 	auto Level = vp.ViewLevel;
 	return Level == nullptr ? FString() : FStringf("Map %s: \"%s\",\nx = %1.4f, y = %1.4f, z = %1.4f, angle = %1.4f, pitch = %1.4f\n%llu fps\n\n",
-		Level->MapName.GetChars(), Level->LevelName.GetChars(), vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw.Degrees, vp.Angles.Pitch.Degrees, (unsigned long long)LastFPS);
+		Level->MapName.GetChars(), Level->LevelName.GetChars(), vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw.Degrees(), vp.Angles.Pitch.Degrees(), (unsigned long long)LastFPS);
 
 }
 
@@ -2825,7 +2826,7 @@ void System_CrashInfo(char* buffer, size_t bufflen, const char *lfstr)
 			buffer += mysnprintf(buffer, buffend - buffer, "%s%sviewx = %f", lfstr, lfstr, vp.Pos.X);
 			buffer += mysnprintf(buffer, buffend - buffer, "%sviewy = %f", lfstr, vp.Pos.Y);
 			buffer += mysnprintf(buffer, buffend - buffer, "%sviewz = %f", lfstr, vp.Pos.Z);
-			buffer += mysnprintf(buffer, buffend - buffer, "%sviewangle = %f", lfstr, vp.Angles.Yaw.Degrees);
+			buffer += mysnprintf(buffer, buffend - buffer, "%sviewangle = %f", lfstr, vp.Angles.Yaw.Degrees());
 		}
 	}
 	buffer += mysnprintf(buffer, buffend - buffer, "%s", lfstr);

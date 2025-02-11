@@ -758,6 +758,16 @@ DEFINE_ACTION_FUNCTION(_Wads, FindLump)
 	ACTION_RETURN_INT(isLumpValid ? fileSystem.FindLump(name, &startlump, 0 != ns) : -1);
 }
 
+DEFINE_ACTION_FUNCTION(_Wads, FindLumpFullName)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(name);
+	PARAM_INT(startlump);
+	PARAM_BOOL(noext);
+	const bool isLumpValid = startlump >= 0 && startlump < fileSystem.GetNumEntries();
+	ACTION_RETURN_INT(isLumpValid ? fileSystem.FindLumpFullName(name, &startlump, noext) : -1);
+}
+
 DEFINE_ACTION_FUNCTION(_Wads, GetLumpName)
 {
 	PARAM_PROLOGUE;
@@ -998,7 +1008,7 @@ DEFINE_ACTION_FUNCTION(DOptionMenuItemCommand, DoCommand)
 	}
 
 	UnsafeExecutionScope scope(unsafe);
-	C_DoCommand(cmd);
+	AddCommandString(cmd);
 	return 0;
 }
 

@@ -391,6 +391,9 @@ OptionMenu "OptionsMenu" protected
 	SafeCommand	"$OPTMNU_WRITEINI",		"writeini"
 	
 	Command "$OPTMNU_CONSOLE",			"menuconsole"
+	Command "$OPTMNU_OPENCONFIG",		"openconfig"
+	Command "$OPTMNU_OPENSCREENSHOTS",	"openscreenshots"
+	Command "$OPTMNU_OPENSAVES",		"opensaves"
 	StaticText " "
 }
 
@@ -1704,6 +1707,7 @@ OptionMenu DeathmatchOptions protected
 	Option "$GMPLYMNU_LOSEFRAG",				"sv_losefrag", "YesNo"
 	Option "$GMPLYMNU_KEEPFRAGS",				"sv_keepfrags", "YesNo"
 	Option "$GMPLYMNU_NOTEAMSWITCH",			"sv_noteamswitch", "YesNo"
+	Option "$GMPLYMNU_NOEXTRAAMMO",				"sv_noextraammo", "NoYes"
 	Class "GameplayMenu"
 }
 
@@ -2664,6 +2668,7 @@ OptionMenu "OpenGLOptions" protected
 	Option "$GLPREFMNU_SPRBILLFACECAMERA",		gl_billboard_faces_camera,		"OnOff"
 	Option "$GLPREFMNU_PARTICLESTYLE",			gl_particles_style,				"Particles"
 	Option "$GLPREFMNU_RENDERQUALITY",			gl_seamless,					"Precision"
+	Option "$GLPREFMNU_CORONAS",				gl_coronas,						"OnOff"
 	StaticText " "
 	Slider "$GLPREFMNU_MENUBLUR",				gl_menu_blur, 0, 5.0, 0.5, 2
 	StaticText " "

@@ -332,6 +332,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("damagemultiply", DamageMultiply)
 		A("waveindexxy", WeaveIndexXY)
 		A("weaveindexz", WeaveIndexZ)
+		A("freezetics", freezetics)
 		A("pdmgreceived", PoisonDamageReceived)
 		A("pdurreceived", PoisonDurationReceived)
 		A("ppreceived", PoisonPeriodReceived)
@@ -1015,10 +1016,10 @@ bool AActor::IsInsideVisibleAngles() const
 	if (p == nullptr || p->camera == nullptr)
 		return true;
 	
-	DAngle anglestart = VisibleStartAngle.Degrees;
-	DAngle angleend = VisibleEndAngle.Degrees;
-	DAngle pitchstart = VisibleStartPitch.Degrees;
-	DAngle pitchend = VisibleEndPitch.Degrees;
+	DAngle anglestart = DAngle::fromDeg(VisibleStartAngle.Degrees());
+	DAngle angleend = DAngle::fromDeg(VisibleEndAngle.Degrees());
+	DAngle pitchstart = DAngle::fromDeg(VisibleStartPitch.Degrees());
+	DAngle pitchend = DAngle::fromDeg(VisibleEndPitch.Degrees());
 	
 	if (anglestart > angleend)
 	{
@@ -1692,7 +1693,7 @@ int P_FaceMobj (AActor *source, AActor *target, DAngle *delta)
 	DAngle diff;
 
 	diff = deltaangle(source->Angles.Yaw, source->AngleTo(target));
-	if (diff > 0)
+	if (diff > nullAngle)
 	{
 		*delta = diff;
 		return 1;
@@ -1740,7 +1741,7 @@ DEFINE_ACTION_FUNCTION(AActor, CanSeek)
 //
 //----------------------------------------------------------------------------
 
-bool P_SeekerMissile (AActor *actor, double thresh, double turnMax, bool precise, bool usecurspeed)
+bool P_SeekerMissile (AActor *actor, DAngle thresh, DAngle turnMax, bool precise, bool usecurspeed)
 {
 	int dir;
 	DAngle delta;
@@ -1795,7 +1796,7 @@ bool P_SeekerMissile (AActor *actor, double thresh, double turnMax, bool precise
 	}
 	else
 	{
-		DAngle pitch = 0.;
+		DAngle pitch = nullAngle;
 		if (!(actor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 		{ // Need to seek vertically
 			double dist = max(1., actor->Distance2D(target));
@@ -1845,16 +1846,16 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 		switch (special)
 		{
 			case 40: case 41: case 42: // Wind_East
-				mo->Thrust(0., windTab[special-40]);
+				mo->Thrust(DAngle::fromDeg(0.), windTab[special-40]);
 				break;
 			case 43: case 44: case 45: // Wind_North
-				mo->Thrust(90., windTab[special-43]);
+				mo->Thrust(DAngle::fromDeg(90.), windTab[special-43]);
 				break;
 			case 46: case 47: case 48: // Wind_South
-				mo->Thrust(270., windTab[special-46]);
+				mo->Thrust(DAngle::fromDeg(270.), windTab[special-46]);
 				break;
 			case 49: case 50: case 51: // Wind_West
-				mo->Thrust(180., windTab[special-49]);
+				mo->Thrust(DAngle::fromDeg(180.), windTab[special-49]);
 				break;
 		}
 	}
@@ -2155,7 +2156,7 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 							{
 								if ((BlockingMobj->flags7 & MF7_MIRRORREFLECT) && (tg | blockingtg))
 								{
-									mo->Angles.Yaw += 180.;
+									mo->Angles.Yaw += DAngle::fromDeg(180.);
 									mo->Vel *= -.5;
 								}
 								else
@@ -2237,7 +2238,7 @@ explode:
 					// For that we need to adjust the start point, and the movement vector.
 					DAngle anglediff = deltaangle(oldangle, mo->Angles.Yaw);
 
-					if (anglediff != 0)
+					if (anglediff != nullAngle)
 					{
 						move = move.Rotated(anglediff);
 						oldangle = mo->Angles.Yaw;
@@ -2450,7 +2451,7 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 	{
 		if (!mo->IsNoClip2())
 		{
-			mo->AddZ(DAngle(360 / 80.f * mo->Level->maptime).Sin() / 8);
+			mo->AddZ(DAngle::fromDeg(360 / 80.f * mo->Level->maptime).Sin() / 8);
 		}
 
 		if (!(mo->flags8 & MF8_NOFRICTION))
@@ -2936,7 +2937,7 @@ void P_NightmareRespawn (AActor *mobj)
 	mo->SpawnPoint = mobj->SpawnPoint;
 	mo->SpawnAngle = mobj->SpawnAngle;
 	mo->SpawnFlags = mobj->SpawnFlags & ~MTF_DORMANT;	// It wasn't dormant when it died, so it's not dormant now, either.
-	mo->Angles.Yaw = (double)mobj->SpawnAngle;
+	mo->Angles.Yaw = DAngle::fromDeg(mobj->SpawnAngle);
 
 	mo->HandleSpawnFlags ();
 	mo->reactiontime = 18;
@@ -3250,28 +3251,28 @@ bool AActor::AdjustReflectionAngle (AActor *thing, DAngle &angle)
 	if (thing->flags4&MF4_SHIELDREFLECT)
 	{
 		// Shield reflection (from the Centaur)
-		if (absangle(angle, thing->Angles.Yaw) > 45)
+		if (absangle(angle, thing->Angles.Yaw) > DAngle::fromDeg(45))
 			return true;	// Let missile explode
 
 		if (thing->flags7 & MF7_NOSHIELDREFLECT) return true;
 
 		if (pr_reflect () < 128)
-			angle += 45;
+			angle += DAngle::fromDeg(45);
 		else
-			angle -= 45;
+			angle -= DAngle::fromDeg(45);
 
 	}
 	else if (thing->flags4&MF4_DEFLECT)
 	{
 		// deflect (like the Heresiarch)
 		if(pr_reflect() < 128) 
-			angle += 45;
+			angle += DAngle::fromDeg(45);
 		else 
-			angle -= 45;
+			angle -= DAngle::fromDeg(45);
 	}
 	else
 	{
-		angle += ((pr_reflect() % 16) - 8);
+		angle += DAngle::fromDeg((pr_reflect() % 16) - 8);
 	}
 	//Always check for AIMREFLECT, no matter what else is checked above.
 	if (thing->flags7 & MF7_AIMREFLECT)
@@ -3374,11 +3375,11 @@ bool AActor::IsOkayToAttack (AActor *link)
 	if (P_CheckSight (this, link))
 	{
 		// AMageStaffFX2::IsOkayToAttack had an extra check here, generalized with a flag,
-		// to only allow the check to succeed if the enemy was in a ~84� FOV of the player
+		// to only allow the check to succeed if the enemy was in a ~84  FOV of the player
 		if (flags3 & MF3_SCREENSEEKER)
 		{
 			DAngle angle = absangle(Friend->AngleTo(link), Friend->Angles.Yaw);
-			if (angle < 30 * (256./360.))
+			if (angle < DAngle::fromDeg(30 * (256./360.)))
 			{
 				return true;
 			}
@@ -3422,8 +3423,8 @@ DAngle AActor::ClampPitch(DAngle p)
 	}
 	else
 	{
-		min = -89.;
-		max = 89.;
+		min = DAngle::fromDeg(-89.);
+		max = DAngle::fromDeg(89.);
 	}
 	p = clamp(p, min, max);
 	return p;
@@ -3633,6 +3634,11 @@ void AActor::Tick ()
 	static const uint8_t HereticScrollDirs[4] = { 6, 9, 1, 4 };
 	static const uint8_t HereticSpeedMuls[5] = { 5, 10, 25, 30, 35 };
 
+	if (freezetics > 0)
+	{
+		freezetics--;
+		return;
+	}
 
 	AActor *onmo;
 
@@ -3903,7 +3909,7 @@ void AActor::Tick ()
 					{ // Strife scroll special
 						int anglespeed = Level->GetFirstSectorTag(sec) - 100;
 						double carryspeed = (anglespeed % 10) / (16 * CARRYFACTOR);
-						DAngle angle = ((anglespeed / 10) * 45.);
+						DAngle angle = DAngle::fromDeg(((anglespeed / 10) * 45.));
 						scrollv += angle.ToVector(carryspeed);
 					}
 				}
@@ -5173,10 +5179,10 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 		spawn.Y = mthing->pos.Y;
 
 		// Allow full angular precision
-		SpawnAngle = (double)mthing->angle;
+		SpawnAngle = DAngle::fromDeg(mthing->angle);
 		if (i_compatflags2 & COMPATF2_BADANGLES)
 		{
-			SpawnAngle += 0.01;
+			SpawnAngle += DAngle::fromDeg(0.01);
 		}
 
 		if (GetDefaultByType(p->cls)->flags & MF_SPAWNCEILING)
@@ -5231,7 +5237,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 	}
 
 	mobj->Angles.Yaw = SpawnAngle;
-	mobj->Angles.Pitch = mobj->Angles.Roll = 0.;
+	mobj->Angles.Pitch = mobj->Angles.Roll = nullAngle;
 	mobj->health = p->health;
 
 	// [RH] Set player sprite based on skin
@@ -5261,7 +5267,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 	p->lastkilltime = 0;
 	p->BlendR = p->BlendG = p->BlendB = p->BlendA = 0.f;
 	p->Uncrouch();
-	p->MinPitch = p->MaxPitch = 0.;	// will be filled in by PostBeginPlay()/netcode
+	p->MinPitch = p->MaxPitch = nullAngle;	// will be filled in by PostBeginPlay()/netcode
 	p->MUSINFOactor = nullptr;
 	p->MUSINFOtics = -1;
 	p->Vel.Zero();	// killough 10/98: initialize bobbing to 0.
@@ -5446,7 +5452,7 @@ void SetMobj (FLevelLocals *Level, AActor *mobj, const FMapThing *mthing, const 
 	// [RH] Add ThingID to mobj and link it in with the others
 	mobj->SetTID(mthing->thingid);
 
-	mobj->PrevAngles.Yaw = mobj->Angles.Yaw = (double)mthing->angle;
+	mobj->PrevAngles.Yaw = mobj->Angles.Yaw = DAngle::fromDeg(mthing->angle);
 
 	// Check if this actor's mapthing has a conversation defined
 	if (mthing->Conversation > 0)
@@ -5470,9 +5476,9 @@ void SetMobj (FLevelLocals *Level, AActor *mobj, const FMapThing *mthing, const 
 	if (mthing->Scale.Y != 0)
 		mobj->Scale.Y = mthing->Scale.Y * mobj->Scale.Y;
 	if (mthing->pitch)
-		mobj->Angles.Pitch = (double)mthing->pitch;
+		mobj->Angles.Pitch = DAngle::fromDeg(mthing->pitch);
 	if (mthing->roll)
-		mobj->Angles.Roll = (double)mthing->roll;
+		mobj->Angles.Roll = DAngle::fromDeg(mthing->roll);
 	if (mthing->score)
 		mobj->Score = mthing->score;
 	if (mthing->fillcolor)
@@ -5498,8 +5504,8 @@ void SetMobj (FLevelLocals *Level, AActor *mobj, const FMapThing *mthing, const 
 
 		if (mobj->IntVar(NAME_lightflags) & LF_SPOT)
 		{
-			mobj->AngleVar(NAME_SpotInnerAngle) = double(mthing->args[1]);
-			mobj->AngleVar(NAME_SpotOuterAngle) = double(mthing->args[2]);
+			mobj->AngleVar(NAME_SpotInnerAngle) = DAngle::fromDeg(mthing->args[1]);
+			mobj->AngleVar(NAME_SpotOuterAngle) = DAngle::fromDeg(mthing->args[2]);
 		}
 	}
 
@@ -5895,7 +5901,7 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, const DVector3 &pos1
 		puff->target = source;
 	
 	// Angle is the opposite of the hit direction (i.e. the puff faces the source.)
-	puff->Angles.Yaw = hitdir + 180;
+	puff->Angles.Yaw = hitdir + DAngle::fromDeg(180);
 
 	// If a puff has a crash state and an actor was not hit,
 	// it will enter the crash state. This is used by the StrifeSpark
@@ -6101,7 +6107,7 @@ void P_BloodSplatter (const DVector3 &pos, AActor *originator, DAngle hitangle)
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2 (originator->Level, 40, pos, hitangle-180., 2, originator->BloodColor);
+		P_DrawSplash2 (originator->Level, 40, pos, hitangle - DAngle::fromDeg(180.), 2, originator->BloodColor);
 	}
 }
 
@@ -6142,7 +6148,7 @@ void P_BloodSplatter2 (const DVector3 &pos, AActor *originator, DAngle hitangle)
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2(originator->Level, 40, pos + add, hitangle - 180., 2, originator->BloodColor);
+		P_DrawSplash2(originator->Level, 40, pos + add, hitangle - DAngle::fromDeg(180.), 2, originator->BloodColor);
 	}
 }
 
@@ -6202,7 +6208,7 @@ void P_RipperBlood (AActor *mo, AActor *bleeder)
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2(bleeder->Level, 28, pos, bleeder->AngleTo(mo) + 180., 0, bleeder->BloodColor);
+		P_DrawSplash2(bleeder->Level, 28, pos, bleeder->AngleTo(mo) + DAngle::fromDeg(180.), 0, bleeder->BloodColor);
 	}
 }
 
@@ -6669,7 +6675,7 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 	// [RC] Now monsters can aim at invisible player as if they were fully visible.
 	if (dest->flags & MF_SHADOW && !(source->flags6 & MF6_SEEINVISIBLE))
 	{
-		DAngle an = pr_spawnmissile.Random2() * (22.5 / 256);
+		DAngle an = DAngle::fromDeg(pr_spawnmissile.Random2() * (22.5 / 256));
 		double c = an.Cos();
 		double s = an.Sin();
 		
@@ -6802,7 +6808,7 @@ AActor *P_SpawnMissileZAimed (AActor *source, double z, AActor *dest, PClassActo
 
 	if (dest->flags & MF_SHADOW)
 	{
-		an += pr_spawnmissile.Random2() * (16. / 360.);
+		an += DAngle::fromDeg(pr_spawnmissile.Random2() * (16. / 360.));
 	}
 	dist = source->Distance2D (dest);
 	speed = GetDefaultSpeed (type);
@@ -6939,7 +6945,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 	DAngle pitch;
 	FTranslatedLineTarget scratch;
 	AActor *defaultobject = GetDefaultByType(type);
-	DAngle vrange = nofreeaim ? 35. : 0.;
+	DAngle vrange = DAngle::fromDeg(nofreeaim ? 35. : 0.);
 
 	if (!pLineTarget) pLineTarget = &scratch;
 	if (!(aimflags & ALF_NOWEAPONCHECK) && source->player && source->player->ReadyWeapon && ((source->player->ReadyWeapon->IntVar(NAME_WeaponFlags) & WIF_NOAUTOAIM) || noautoaim))
@@ -6959,7 +6965,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 		int i = 2;
 		do
 		{
-			an = angle + angdiff[i];
+			an = angle + DAngle::fromDeg(angdiff[i]);
 			pitch = P_AimLineAttack (source, an, linetargetrange, pLineTarget, vrange, aimflags);
 	
 			if (source->player != NULL &&
@@ -6976,7 +6982,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 			an = angle;
 			if (nofreeaim || !source->Level->IsFreelookAllowed())
 			{
-				pitch = 0.;
+				pitch = nullAngle;
 			}
 		}
 	}
@@ -7030,7 +7036,7 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnPlayerMissile)
 	PARAM_BOOL(noautoaim);
 	PARAM_INT(aimflags);
 	AActor *missileactor;
-	if (angle == 1e37) angle = self->Angles.Yaw;
+	if (angle == DAngle::fromDeg(1e37)) angle = self->Angles.Yaw;
 	AActor *misl = P_SpawnPlayerMissile(self, x, y, z, type, angle, lt, &missileactor, nofreeaim, noautoaim, aimflags);
 	if (numret > 0) ret[0].SetObject(misl);
 	if (numret > 1) ret[1].SetObject(missileactor), numret = 2;

@@ -106,7 +106,7 @@ namespace swrenderer
 		if (psp != nullptr && psp->GetState() != nullptr)
 		{
 			bool disablefullbright = false;
-			FTextureID lump = sprites[psp->GetSprite()].GetSpriteFrame(psp->GetFrame(), 0, 0., nullptr);
+			FTextureID lump = sprites[psp->GetSprite()].GetSpriteFrame(psp->GetFrame(), 0, nullAngle, nullptr);
 			if (lump.isValid())
 			{
 				auto tex = TexMan.GetGameTexture(lump, true);
