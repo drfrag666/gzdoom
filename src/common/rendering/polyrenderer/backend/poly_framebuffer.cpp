@@ -497,6 +497,7 @@ TArray<uint8_t> PolyFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &color_
 void PolyFrameBuffer::BeginFrame()
 {
 	SetViewportRects(nullptr);
+	mViewpoints->Clear();
 	CheckCanvas();
 
 #if 0
