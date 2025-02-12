@@ -60,7 +60,6 @@ void M_StartControlPanel(bool makeSound, bool scaleoverride = false);
 
 int DMenu::InMenu;
 static ScaleOverrider *CurrentScaleOverrider;
-extern int chatmodeon;
 
 EXTERN_CVAR(Bool, ui_classic)
 

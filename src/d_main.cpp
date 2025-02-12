@@ -176,6 +176,7 @@ void I_UpdateWindowTitle();
 void S_ParseMusInfo();
 void D_GrabCVarDefaults();
 void LoadHexFont(const char* filename);
+void InitBuildTiles();
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -330,10 +331,9 @@ FTextureID Advisory;
 FTextureID Page;
 const char *Subtitle;
 bool nospriterename;
-FStartupInfo GameStartupInfo;
 FString lastIWAD;
 int restart = 0;
-bool AppActive = true;
+extern bool AppActive;
 bool playedtitlemusic;
 
 FStartScreen* StartScreen;
@@ -3226,7 +3226,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	{ 
 		StartWindow->Progress(); 
 		if (StartScreen) StartScreen->Progress(1); 
-	}, CheckForHacks);
+	}, CheckForHacks, InitBuildTiles);
 	PatchTextures();
 	TexAnim.Init();
 	C_InitConback(TexMan.CheckForTexture(gameinfo.BorderFlat, ETextureType::Flat), true, 0.25);
@@ -3544,6 +3544,7 @@ static int D_DoomMain_Internal (void)
 		System_ToggleFullConsole,
 		System_StartCutscene,
 		System_SetTransition,
+		CheckCheatmode,
 	};
 
 	

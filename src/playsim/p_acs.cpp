@@ -4048,6 +4048,7 @@ enum
 	APROP_MaxDropOffHeight= 45,
 	APROP_DamageType	= 46,
 	APROP_SoundClass	= 47,
+	APROP_FriendlySeeBlocks= 48,
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -4320,6 +4321,9 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 			}
 		}	
 		break;
+	case APROP_FriendlySeeBlocks:
+		actor->friendlyseeblocks = value;
+		break;
 
 	default:
 		// do nothing.
@@ -4419,6 +4423,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_MaxDropOffHeight: return DoubleToACS(actor->MaxDropOffHeight);
 	case APROP_DamageType:	return GlobalACSStrings.AddString(actor->DamageType.GetChars());
 	case APROP_SoundClass:	return GlobalACSStrings.AddString(S_GetSoundClass(actor));
+	case APROP_FriendlySeeBlocks: return actor->friendlyseeblocks;
 
 	default:				return 0;
 	}
@@ -4468,6 +4473,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_MaxStepHeight:
 		case APROP_MaxDropOffHeight:
 		case APROP_StencilColor:
+		case APROP_FriendlySeeBlocks:
 			return (GetActorProperty(tid, property) == value);
 
 		// Boolean values need to compare to a binary version of value
