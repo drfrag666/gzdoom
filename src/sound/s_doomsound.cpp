@@ -1429,3 +1429,8 @@ CCMD (loopsound)
 	}
 }
 
+CCMD(snd_reset)
+{
+	S_SoundReset();
+}
+

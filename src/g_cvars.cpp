@@ -38,13 +38,9 @@
 #include "g_game.h"
 #include "gstrings.h"
 #include "i_system.h"
-#include "v_font.h"
 #include "utf8.h"
 #include "gi.h"
 #include "i_interface.h"
-
-EXTERN_CVAR(Int, vid_scalemode)
-EXTERN_CVAR(Float, vid_scalefactor)
 
 void I_UpdateWindowTitle();
 
@@ -149,52 +145,6 @@ CUSTOM_CVAR(Float, teamdamage, 0.f, CVAR_SERVERINFO | CVAR_NOINITCALL)
 	{
 		Level->teamdamage = self;
 	}
-}
-
-EXTERN_CVAR(Bool, ui_generic)
-EXTERN_CVAR(Bool, ui_classic)
-EXTERN_CVAR(String, language)
-
-void DisableGenericUI(bool cvar)
-{
-	if (generic_ui && cvar) generic_ui = false;
-	if (cvar)
-	{
-		CurrentConsoleFont = ConFont;
-	}
-	else
-	{
-		CurrentConsoleFont = NewConsoleFont;
-	}
-}
-
-CUSTOM_CVAR(Bool, ui_classic, true, CVAR_ARCHIVE | CVAR_NOINITCALL)
-{
-	if (ui_generic && self)
-		ui_generic = false;
-	DisableGenericUI(self);
-	language = "auto";
-	vid_scalemode.Callback();
-	vid_scalefactor.Callback();
-}
-
-CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
-{
-	FString str = *self;
-	bool invalid = ui_classic && (!str.Compare("cs")  || !str.Compare("de") || !str.Compare("eo") || !str.Compare("fi") || !str.Compare("jp")
-		|| !str.Compare("ko") || !str.Compare("nl") || !str.Compare("pl") || !str.Compare("ro") || !str.Compare("ru"));
-	if (invalid && str.Compare("auto")) self = "auto";
-	if (ui_classic && !str.Compare("sr")) self = "pt";
-	GStrings.UpdateLanguage(self);
-	for (auto Level : AllLevels())
-	{
-		// does this even make sense on secondary levels...?
-		if (Level->info != nullptr) Level->LevelName = Level->info->LookupLevelName();
-	}
-	UpdateGenericUI(ui_generic);
-	if (ui_classic)
-		DisableGenericUI(true);
-	I_UpdateWindowTitle();
 }
 
 CVAR(Float, cl_scaleweaponfov, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
