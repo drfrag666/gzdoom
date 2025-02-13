@@ -10,79 +10,68 @@ jobs:
       fail-fast: false
       matrix:
         config:
-        - {
-            name: "Visual Studio 2022",
-            os: windows-2022,
-            extra_options: "-A x64",
-            build_type: "Release"
-          }
-        - {
-            name: "Visual Studio 2019",
-            os: windows-2019,
-            extra_options: "-A x64",
-            build_type: "Release"
-          }
-        - {
-            name: "Visual Studio 2019",
-            os: windows-2019,
-            extra_options: "-A x64",
-            build_type: "Debug"
-          }
-        - {
-            name: "Visual Studio 32-bit",
-            os: windows-2019,
-            extra_options: "-A Win32 -DFORCE_INTERNAL_ZLIB=ON",
-            build_type: "Release"
-          }
-        - {
-            name: "macOS",
-            os: macos-12,
-            deps_cmdline: "brew install libvpx",
-            build_type: "Release"
-          }
-        - {
-            name: "macOS",
-            os: macos-12,
-            extra_options: "-G Xcode -DDYN_OPENAL=OFF",
-            deps_cmdline: "brew install libvpx fluidsynth mpg123 libsndfile",
-            build_type: "Debug"
-          }
-        - {
-            name: "Linux GCC 7",
-            os: ubuntu-20.04,
-            extra_options: "-DCMAKE_C_COMPILER=gcc-7 -DCMAKE_CXX_COMPILER=g++-7",
-            deps_cmdline: "sudo apt update && sudo apt install g++-7 libsdl2-dev libvpx-dev libgtk2.0-dev",
-            build_type: "RelWithDebInfo"
-          }
-        - {
-            name: "Linux GCC 9",
-            os: ubuntu-20.04,
-            extra_options: "-DCMAKE_C_COMPILER=gcc-9 -DCMAKE_CXX_COMPILER=g++-9",
-            deps_cmdline: "sudo apt update && sudo apt install g++-9 libsdl2-dev libvpx-dev libgtk2.0-dev",
-            build_type: "RelWithDebInfo"
-          }
-        - {
-            name: "Linux Clang 10",
-            os: ubuntu-20.04,
-            extra_options: "-DCMAKE_C_COMPILER=clang-10 -DCMAKE_CXX_COMPILER=clang++-10 -DDYN_OPENAL=OFF",
-            deps_cmdline: "sudo apt update && sudo apt install clang-9 libsdl2-dev libvpx-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev",
-            build_type: "Debug"
-          }
-        - {
-            name: "Linux Clang 12",
-            os: ubuntu-20.04,
-            extra_options: "-DCMAKE_C_COMPILER=clang-12 -DCMAKE_CXX_COMPILER=clang++-12",
-            deps_cmdline: "sudo apt update && sudo apt install clang-12 libsdl2-dev libvpx-dev",
-            build_type: "Release"
-          }
+            name: Visual Studio 2022
+            os: windows-2022
+            extra_options: -A x64
+            build_type: Release
+
+            name: Visual Studio 2019
+            os: windows-2019
+            extra_options: -A x64
+            build_type: Release
+
+            name: Visual Studio 2019
+            os: windows-2019
+            extra_options: -A x64
+            build_type: Debug
+
+            name: Visual Studio 32-bit
+            os: windows-2019
+            extra_options: -A Win32 -DFORCE_INTERNAL_ZLIB=ON
+            build_type: Release
+
+            name: macOS
+            os: macos-12
+            deps_cmdline: brew install libvpx
+            build_type: Release
+
+            name: macOS
+            os: macos-12
+            extra_options: -G Xcode -DDYN_OPENAL=OFF
+            deps_cmdline: brew install libvpx fluidsynth mpg123 libsndfile
+            build_type: Debug
+
+            name: Linux GCC 7
+            os: ubuntu-20.04
+            extra_options: -DCMAKE_C_COMPILER=gcc-7 -DCMAKE_CXX_COMPILER=g++-7
+            deps_cmdline: sudo apt update && sudo apt install g++-7 libsdl2-dev libvpx-dev libgtk2.0-dev
+            build_type: RelWithDebInfo
+
+            name: Linux GCC 9
+            os: ubuntu-20.04
+            extra_options: -DCMAKE_C_COMPILER=gcc-9 -DCMAKE_CXX_COMPILER=g++-9
+            deps_cmdline: sudo apt update && sudo apt install g++-9 libsdl2-dev libvpx-dev libgtk2.0-dev
+            build_type: RelWithDebInfo
+
+            name: Linux Clang 10
+            os: ubuntu-20.04
+            extra_options: -DCMAKE_C_COMPILER=clang-10 -DCMAKE_CXX_COMPILER=clang++-10 -DDYN_OPENAL=OFF
+            deps_cmdline: sudo apt update && sudo apt install clang-9 libsdl2-dev libvpx-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev
+            build_type: Debug
+
+            name: Linux Clang 12
+            os: ubuntu-20.04
+            extra_options: -DCMAKE_C_COMPILER=clang-12 -DCMAKE_CXX_COMPILER=clang++-12
+            deps_cmdline: sudo apt update && sudo apt install clang-12 libsdl2-dev libvpx-dev
+            build_type: Release
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
 
     - name: Install Dependencies
       shell: bash
       run: |
-        if [[ ! -z "${{ matrix.config.deps_cmdline }}" ]]; then
+        if [[ -n "${{ matrix.config.deps_cmdline }}" ]]; then
           eval ${{ matrix.config.deps_cmdline }}
         fi
         mkdir build
@@ -91,7 +80,7 @@ jobs:
         elif [[ "${{ runner.os }}" == 'Linux' ]]; then
           export ZMUSIC_PACKAGE=zmusic-1.1.9-linux.tar.xz
         fi
-        if [[ ! -z "${ZMUSIC_PACKAGE}" ]]; then
+        if [[ -n "${ZMUSIC_PACKAGE}" ]]; then
           cd build
           wget -q "https://github.com/coelckers/gzdoom/releases/download/ci_deps/${ZMUSIC_PACKAGE}"
           tar -xf "${ZMUSIC_PACKAGE}"
@@ -128,7 +117,7 @@ jobs:
 
     - name: Upload Package
       if: runner.os == 'Windows'  # Remove to store packages of all targets
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         path: build/package
         name: ${{ matrix.config.name }} ${{ matrix.config.build_type }}
