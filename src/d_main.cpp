@@ -941,9 +941,9 @@ void D_Display ()
 	}
 
 	// [RH] Allow temporarily disabling wipes
-	if (NoWipe)
+	if (NoWipe || !CanWipe())
 	{
-		NoWipe--;
+		if (NoWipe > 0) NoWipe--;
 		wipestart = nullptr;
 		wipegamestate = gamestate;
 	}
@@ -3702,6 +3702,7 @@ int GameMain()
 {
 	int ret = 0;
 	GameTicRate = TICRATE;
+	I_InitTime();
 
 	ConsoleCallbacks cb = {
 		D_UserInfoChanged,

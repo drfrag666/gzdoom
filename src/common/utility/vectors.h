@@ -46,6 +46,8 @@
 #include <string.h>
 #include "xs_Float.h"
 #include "math/cmath.h"
+#include "basics.h"
+#include "cmdlib.h"
 
 
 #define EQUAL_EPSILON (1/65536.)
@@ -274,7 +276,7 @@ struct TVector2
 	TAngle<vec_t> Angle() const;
 
 	// Returns a rotated vector. angle is in degrees.
-	TVector2 Rotated (double angle)
+	TVector2 Rotated (double angle) const
 	{
 		double cosval = g_cosdeg (angle);
 		double sinval = g_sindeg (angle);
@@ -283,10 +285,16 @@ struct TVector2
 
 	// Returns a rotated vector. angle is in degrees.
 	template<class T>
-	TVector2 Rotated(TAngle<T> angle)
+	TVector2 Rotated(TAngle<T> angle) const
 	{
 		double cosval = angle.Cos();
 		double sinval = angle.Sin();
+		return TVector2(X*cosval - Y*sinval, Y*cosval + X*sinval);
+	}
+
+	// Returns a rotated vector. angle is in degrees.
+	TVector2 Rotated(const double cosval, const double sinval) const
+	{
 		return TVector2(X*cosval - Y*sinval, Y*cosval + X*sinval);
 	}
 
@@ -307,6 +315,8 @@ template<class vec_t>
 struct TVector3
 {
 	typedef TVector2<vec_t> Vector2;
+	// this does not compile - should be true on all relevant hardware.
+	//static_assert(myoffsetof(TVector3, X) == myoffsetof(Vector2, X) && myoffsetof(TVector3, Y) == myoffsetof(Vector2, Y), "TVector2 and TVector3 are not aligned");
 
 	vec_t X, Y, Z;
 
@@ -343,7 +353,7 @@ struct TVector3
 		return X == 0 && Y == 0 && Z == 0;
 	}
 
-	TVector3 plusZ(double z)
+	TVector3 plusZ(double z) const
 	{
 		return { X, Y, Z + z };
 	}
@@ -491,9 +501,14 @@ struct TVector3
 	}
 
 	// returns the XY fields as a 2D-vector.
-	Vector2 XY() const
+	const Vector2& XY() const
 	{
-		return{ X, Y };
+		return *reinterpret_cast<const Vector2*>(this);
+	}
+
+	Vector2& XY()
+	{
+		return *reinterpret_cast<Vector2*>(this);
 	}
 
 	// Add a 3D vector and a 2D vector.
@@ -562,7 +577,7 @@ struct TVector3
 		}
 
 		up = n ^right;
-		right.MakeUnit();;
+		right.MakeUnit();
 		up.MakeUnit();
 	}
 
@@ -650,6 +665,7 @@ struct TVector3
 template<class vec_t>
 struct TVector4
 {
+	typedef TVector2<vec_t> Vector2;
 	typedef TVector3<vec_t> Vector3;
 
 	vec_t X, Y, Z, W;
@@ -707,6 +723,29 @@ struct TVector4
 	{
 		return X != other.X || Y != other.Y || Z != other.Z || W != other.W;
 	}
+
+	// returns the XY fields as a 2D-vector.
+	const Vector2& XY() const
+	{
+		return *reinterpret_cast<const Vector2*>(this);
+	}
+
+	Vector2& XY()
+	{
+		return *reinterpret_cast<Vector2*>(this);
+	}
+
+	// returns the XY fields as a 2D-vector.
+	const Vector3& XYZ() const
+	{
+		return *reinterpret_cast<const Vector3*>(this);
+	}
+
+	Vector3& XYZ()
+	{
+		return *reinterpret_cast<Vector3*>(this);
+	}
+
 
 	// Test for approximate equality
 	bool ApproximatelyEquals(const TVector4 &other) const
@@ -821,12 +860,6 @@ struct TVector4
 	{
 		X -= other.X, Y -= other.Y, Z -= other.Z;
 		return *this;
-	}
-
-	// returns the XYZ fields as a 3D-vector.
-	Vector3 XYZ() const
-	{
-		return{ X, Y, Z };
 	}
 
 	// Add a 4D vector and a 3D vector.
@@ -1212,6 +1245,11 @@ public:
 		return TAngle(bang * (90. / 512));
 	}
 
+	static constexpr TAngle fromBuildf(double bang)
+	{
+		return TAngle(bang * (90. / 512));
+	}
+
 	static constexpr TAngle fromQ16(int bang)
 	{
 		return TAngle(bang * (90. / 16384));
@@ -1334,6 +1372,11 @@ public:
 		return int(Degrees_ * (512 / 90.0));
 	}
 
+	constexpr double Buildfang() const
+	{
+		return Degrees_ * (512 / 90.0);
+	}
+
 	constexpr int Q16() const
 	{
 		return int(Degrees_ * (16384 / 90.0));
@@ -1364,6 +1407,11 @@ public:
 	{
 		return clamp(Tan(), -max, max);
 	}
+
+	int Sgn() const
+	{
+		return ::Sgn(int(BAMs()));
+	}
 };
 
 template<class T>
@@ -1388,6 +1436,12 @@ template<class T>
 inline TAngle<T> absangle(const TAngle<T> &a1, const TAngle<T> &a2)
 {
 	return fabs((a1 - a2).Normalized180());
+}
+
+template<class T>
+inline TAngle<T> clamp(const TAngle<T> &angle, const TAngle<T> &min, const TAngle<T> &max)
+{
+	return TAngle<T>::fromDeg(clamp(angle.Degrees(), min.Degrees(), max.Degrees()));
 }
 
 inline TAngle<double> VecToAngle(double x, double y)
@@ -1425,6 +1479,36 @@ TAngle<T> TVector3<T>::Pitch() const
 	return -VecToAngle(TVector2<T>(X, Y).Length(), Z);
 }
 
+template<class T>
+inline TVector2<T> clamp(const TVector2<T> &vec, const TVector2<T> &min, const TVector2<T> &max)
+{
+	return TVector2<T>(clamp(vec.X, min.X, max.X), clamp(vec.Y, min.Y, max.Y));
+}
+
+template<class T>
+inline TVector2<T> interpolatedvec2(const TVector2<T> &ovec, const TVector2<T> &vec, const double scale)
+{
+	return ovec + ((vec - ovec) * scale);
+}
+
+template<class T>
+inline TVector3<T> interpolatedvec3(const TVector3<T> &ovec, const TVector3<T> &vec, const double scale)
+{
+	return ovec + ((vec - ovec) * scale);
+}
+
+template<class T>
+inline TVector4<T> interpolatedvec4(const TVector4<T> &ovec, const TVector4<T> &vec, const double scale)
+{
+	return ovec + ((vec - ovec) * scale);
+}
+
+template<class T>
+inline TAngle<T> interpolatedangle(const TAngle<T> &oang, const TAngle<T> &ang, const double scale)
+{
+	return oang + (deltaangle(oang, ang) * scale);
+}
+
 // Much of this is copied from TVector3. Is all that functionality really appropriate?
 template<class vec_t>
 struct TRotator
@@ -1434,7 +1518,6 @@ struct TRotator
 	Angle Pitch;	// up/down
 	Angle Yaw;		// left/right
 	Angle Roll;		// rotation about the forward axis.
-	Angle CamRoll;	// Roll specific to actor cameras. Used by quakes.
 
 	TRotator() = default;
 
@@ -1610,6 +1693,14 @@ typedef TAngle<double>			DAngle;
 
 constexpr DAngle nullAngle = DAngle::fromDeg(0.);
 constexpr FAngle nullFAngle = FAngle::fromDeg(0.);
+
+constexpr DAngle DAngle22_5 = DAngle::fromDeg(22.5);
+constexpr DAngle DAngle45 = DAngle::fromDeg(45);
+constexpr DAngle DAngle60 = DAngle::fromDeg(60);
+constexpr DAngle DAngle90 = DAngle::fromDeg(90);
+constexpr DAngle DAngle180 = DAngle::fromDeg(180);
+constexpr DAngle DAngle270 = DAngle::fromDeg(270);
+constexpr DAngle DAngle360 = DAngle::fromDeg(360);
 
 class Plane
 {
