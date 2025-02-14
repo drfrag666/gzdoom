@@ -121,25 +121,28 @@ void DEarthquake::Tick ()
 
 	if (m_DamageRadius > 0)
 	{
-		for (i = 0; i < MAXPLAYERS; i++)
+		if (m_Flags & QF_AFFECTACTORS)
 		{
-			if (Level->PlayerInGame(i) && !(Level->Players[i]->cheats & CF_NOCLIP))
-			{
-				AActor *victim = Level->Players[i]->mo;
-				double dist;
+			auto iterator = m_Spot->Level->GetThinkerIterator<AActor>();
+			AActor* mo = nullptr;
 
-				dist = m_Spot->Distance2D(victim, true);
-				// Check if in damage radius
-				if (dist < m_DamageRadius && victim->Z() <= victim->floorz)
+			while ((mo = iterator.Next()) != NULL)
+			{
+				if (mo == m_Spot) //Ignore the earthquake origin.
+					continue;
+
+
+				DoQuakeDamage(this, mo);
+			}
+		}
+		else
+		{
+			for (i = 0; i < MAXPLAYERS; i++)
+			{
+				if (Level->PlayerInGame(i) && !(Level->Players[i]->cheats & CF_NOCLIP))
 				{
-					if (pr_quake() < 50)
-					{
-						P_DamageMobj (victim, NULL, NULL, pr_quake.HitDice (1), NAME_Quake);
-					}
-					// Thrust player around
-					DAngle an = victim->Angles.Yaw + DAngle::fromDeg(pr_quake());
-					victim->Vel.X += m_Intensity.X * an.Cos() * 0.5;
-					victim->Vel.Y += m_Intensity.Y * an.Sin() * 0.5;
+					AActor* victim = Level->Players[i]->mo;
+						DoQuakeDamage(this, victim);
 				}
 			}
 		}
@@ -155,6 +158,39 @@ void DEarthquake::Tick ()
 		}
 		Destroy();
 	}
+}
+
+//==========================================================================
+//
+// DEarthquake :: DoQuakeDamage
+//
+// Handles performing earthquake damage and thrust to the specified victim.
+//
+//==========================================================================
+
+void DEarthquake::DoQuakeDamage(DEarthquake *quake, AActor *victim) const
+{
+	double dist;
+
+	if (!quake || !victim) return;
+
+	dist = quake->m_Spot->Distance2D(victim, true);
+	// Check if in damage radius
+	if (dist < m_DamageRadius && victim->Z() <= victim->floorz)
+	{
+		if (!(quake->m_Flags & QF_SHAKEONLY) && pr_quake() < 50)
+		{
+			P_DamageMobj(victim, NULL, NULL, pr_quake.HitDice(1), NAME_Quake);
+		}
+		// Thrust player or thrustable actor around
+		if (victim->player || !(victim->flags7 & MF7_DONTTHRUST))
+		{
+			DAngle an = victim->Angles.Yaw + DAngle::fromDeg(pr_quake());
+			victim->Vel.X += m_Intensity.X * an.Cos() * 0.5;
+			victim->Vel.Y += m_Intensity.Y * an.Sin() * 0.5;
+		}
+	}
+	return;
 }
 
 //==========================================================================
@@ -295,7 +331,7 @@ int DEarthquake::StaticGetQuakeIntensities(double ticFrac, AActor *victim, FQuak
 
 	while ( (quake = iterator.Next()) != nullptr)
 	{
-		if (quake->m_Spot != nullptr)
+		if (quake->m_Spot != nullptr && !(quake->m_Flags & QF_GROUNDONLY && victim->Z() > victim->floorz))
 		{
 			double dist;
 
