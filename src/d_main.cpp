@@ -1193,7 +1193,7 @@ void D_DoomLoop ()
 	Subtitle = nullptr;
 	Advisory.SetInvalid();
 
-	vid_cursor.Callback();
+	vid_cursor->Callback();
 
 	for (;;)
 	{
@@ -1243,14 +1243,14 @@ void D_DoomLoop ()
 		{
 			if (error.GetMessage ())
 			{
-				Printf (PRINT_BOLD, "\n%s\n", error.GetMessage());
+				Printf (PRINT_NONOTIFY | PRINT_BOLD, "\n%s\n", error.GetMessage());
 			}
 			D_ErrorCleanup ();
 		}
 		catch (CVMAbortException &error)
 		{
 			error.MaybePrintMessage();
-			Printf("%s", error.stacktrace.GetChars());
+			Printf(PRINT_NONOTIFY, "%s", error.stacktrace.GetChars());
 			D_ErrorCleanup();
 		}
 	}
@@ -3711,7 +3711,7 @@ int GameMain()
 		G_GetUserCVar,
 		[]() { return gamestate != GS_FULLCONSOLE && gamestate != GS_STARTUP; }
 	};
-
+	C_InitCVars(0);
 	C_InstallHandlers(&cb);
 	SetConsoleNotifyBuffer();
 
@@ -3742,6 +3742,7 @@ int GameMain()
 	I_ShutdownInput();
 	M_SaveDefaultsFinal();
 	DeleteStartupScreen();
+	C_UninitCVars(); // must come last so that nothing will access the CVARs anymore after deletion.
 	delete Args;
 	Args = nullptr;
 	return ret;

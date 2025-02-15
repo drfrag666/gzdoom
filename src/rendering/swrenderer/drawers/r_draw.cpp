@@ -55,8 +55,8 @@
 #include "playsim/a_dynlight.h"
 #include "polyrenderer/drawers/poly_thread.h"
 
-CVAR(Bool, r_dynlights, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVAR(Bool, r_fuzzscale, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Bool, r_dynlights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Bool, r_fuzzscale, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 namespace swrenderer
 {

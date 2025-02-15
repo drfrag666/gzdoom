@@ -57,8 +57,6 @@ struct FLatchedValue
 
 static TArray<FLatchedValue> LatchedValues;
 
-FBaseCVar *CVars = NULL;
-
 int cvar_defflags;
 
 
@@ -69,6 +67,86 @@ static ConsoleCallbacks* callbacks;
 void C_InstallHandlers(ConsoleCallbacks* cb)
 {
 	callbacks = cb;
+}
+
+void C_InitCVars(int which)
+{
+	AutoSegs::CVarDecl.ForEach([](FCVarDecl* cvInfo)
+	{
+		FBaseCVar* newcvar;
+		switch(cvInfo->type)
+		{
+		default:
+			return;
+			
+		case CVAR_Int:
+		{
+			using callbacktype = void (*)(FIntCVar &);
+			newcvar = new FIntCVar(cvInfo->name, cvInfo->defaultval.Int, cvInfo->flags, reinterpret_cast<callbacktype>(cvInfo->callbackp), cvInfo->description);
+			break;
+		}
+		case CVAR_Bool:
+		{
+			using callbacktype = void (*)(FBoolCVar &);
+			newcvar = new FBoolCVar(cvInfo->name, cvInfo->defaultval.Bool, cvInfo->flags, reinterpret_cast<callbacktype>(cvInfo->callbackp), cvInfo->description);
+			break;
+		}
+		case CVAR_Float:
+		{
+			using callbacktype = void (*)(FFloatCVar &);
+			newcvar = new FFloatCVar(cvInfo->name, cvInfo->defaultval.Float, cvInfo->flags, reinterpret_cast<callbacktype>(cvInfo->callbackp), cvInfo->description);
+			break;
+		}
+		case CVAR_String:
+		{
+			using callbacktype = void (*)(FStringCVar &);
+			newcvar = new FStringCVar(cvInfo->name, cvInfo->defaultval.String, cvInfo->flags, reinterpret_cast<callbacktype>(cvInfo->callbackp), cvInfo->description);
+			break;
+		}
+		case CVAR_Color:
+		{
+			using callbacktype = void (*)(FColorCVar &);
+			newcvar = new FColorCVar(cvInfo->name, cvInfo->defaultval.Int, cvInfo->flags, reinterpret_cast<callbacktype>(cvInfo->callbackp), cvInfo->description);
+			break;
+		}
+
+		}
+		*(void**)cvInfo->refAddr = newcvar;
+	});
+	AutoSegs::CVarDecl.ForEach([](FCVarDecl* cvInfo)
+		{
+			FBaseCVar* newcvar;
+			switch (cvInfo->type)
+			{
+			default:
+				return;
+
+			case CVAR_Flag:
+			{
+				newcvar = new FFlagCVar(cvInfo->name, *cvInfo->defaultval.Pointer->get(), cvInfo->flags, cvInfo->description);
+				break;
+			}
+			case CVAR_Mask:
+			{
+				newcvar = new FMaskCVar(cvInfo->name, *cvInfo->defaultval.Pointer->get(), cvInfo->flags, cvInfo->description);
+				break;
+			}
+
+			}
+			*(void**)cvInfo->refAddr = newcvar;
+		});
+}
+
+void C_UninitCVars()
+{
+	decltype(cvarMap)::Iterator it(cvarMap);
+	decltype(cvarMap)::Pair* pair;
+	while (it.NextPair(pair))
+	{
+		auto var = pair->Value;
+		pair->Value = nullptr;
+		delete var;
+	}
 }
 
 FBaseCVar::FBaseCVar (const char *var_name, uint32_t flags, void (*callback)(FBaseCVar &), const char *descr)
@@ -99,8 +177,7 @@ FBaseCVar::FBaseCVar (const char *var_name, uint32_t flags, void (*callback)(FBa
 		var = FindCVar(var_name, NULL);
 		C_AddTabCommand (var_name);
 		VarName = var_name;
-		m_Next = CVars;
-		CVars = this;
+		cvarMap.Insert(var_name, this);
 	}
 
 	if (var)
@@ -110,11 +187,7 @@ FBaseCVar::FBaseCVar (const char *var_name, uint32_t flags, void (*callback)(FBa
 
 		value = var->GetFavoriteRep (&type);
 		ForceSet (value, type);
-
-		if (var->Flags & CVAR_AUTO)
-			delete var;
-		else
-			var->~FBaseCVar();
+		delete var;
 
 		Flags = flags;
 	}
@@ -134,13 +207,9 @@ FBaseCVar::~FBaseCVar ()
 
 		if (var == this)
 		{
-			if (prev)
-				prev->m_Next = m_Next;
-			else
-				CVars = m_Next;
-		}
-		if (var->Flags & CVAR_AUTO)
+			cvarMap.Remove(var->VarName);
 			C_RemoveTabCommand(VarName);
+		}
 	}
 }
 
@@ -523,15 +592,15 @@ void FBaseCVar::EnableNoSet ()
 void FBaseCVar::EnableCallbacks ()
 {
 	m_UseCallback = true;
-	FBaseCVar *cvar = CVars;
-
-	while (cvar)
+	CVarMap::Iterator it(cvarMap);
+	CVarMap::Pair *pair;
+	while (it.NextPair(pair))
 	{
+		auto cvar = pair->Value;
 		if (!(cvar->Flags & CVAR_NOINITCALL))
 		{
 			cvar->Callback ();
 		}
-		cvar = cvar->m_Next;
 	}
 }
 
@@ -884,15 +953,16 @@ int FColorCVar::ToInt2 (UCVarValue value, ECVarType type)
 
 void FBaseCVar::ResetColors ()
 {
-	FBaseCVar *var = CVars;
-
-	while (var)
+	decltype(cvarMap)::Iterator it(cvarMap);
+	decltype(cvarMap)::Pair *pair;
+	while (it.NextPair(pair))
 	{
+		auto var = pair->Value;
+
 		if (var->GetRealType () == CVAR_Color)
 		{
 			var->DoSet (var->GetGenericRep (CVAR_Int), CVAR_Int);
 		}
-		var = var->m_Next;
 	}
 }
 
@@ -949,7 +1019,7 @@ BitVal (bitval)
 
 ECVarType FFlagCVar::GetRealType () const
 {
-	return CVAR_DummyBool;
+	return CVAR_Flag;
 }
 
 UCVarValue FFlagCVar::GetGenericRep (ECVarType type) const
@@ -1045,7 +1115,7 @@ BitVal (bitval)
 
 ECVarType FMaskCVar::GetRealType () const
 {
-	return CVAR_DummyInt;
+	return CVAR_Mask;
 }
 
 UCVarValue FMaskCVar::GetGenericRep (ECVarType type) const
@@ -1132,8 +1202,11 @@ static int sortcvars (const void *a, const void *b)
 void FilterCompactCVars (TArray<FBaseCVar *> &cvars, uint32_t filter)
 {
 	// Accumulate all cvars that match the filter flags.
-	for (FBaseCVar *cvar = CVars; cvar != NULL; cvar = cvar->m_Next)
+	decltype(cvarMap)::Iterator it(cvarMap);
+	decltype(cvarMap)::Pair *pair;
+	while (it.NextPair(pair))
 	{
+		auto cvar = pair->Value;
 		if ((cvar->Flags & filter) && !(cvar->Flags & CVAR_IGNORE) && !(netcompat && cvar->Flags & CVAR_DOWNSTREAM))
 			cvars.Push(cvar);
 	}
@@ -1155,7 +1228,7 @@ void C_WriteCVars (uint8_t **demo_p, uint32_t filter, bool compact)
 
 FString C_GetMassCVarString (uint32_t filter, bool compact)
 {
-	FBaseCVar *cvar;
+	FBaseCVar* cvar;
 	FString dump;
 
 	if (compact)
@@ -1171,8 +1244,11 @@ FString C_GetMassCVarString (uint32_t filter, bool compact)
 	}
 	else
 	{
-		for (cvar = CVars; cvar != NULL; cvar = cvar->m_Next)
+		decltype(cvarMap)::Iterator it(cvarMap);
+		decltype(cvarMap)::Pair *pair;
+		while (it.NextPair(pair))
 		{
+			cvar = pair->Value;
 			if ((cvar->Flags & filter) && !(cvar->Flags & (CVAR_NOSAVE|CVAR_IGNORE))&& !(netcompat && cvar->Flags & CVAR_DOWNSTREAM))
 			{
 				UCVarValue val = cvar->GetGenericRep(CVAR_String);
@@ -1264,8 +1340,11 @@ void C_BackupCVars (void)
 
 	FCVarBackup backup;
 
-	for (FBaseCVar *cvar = CVars; cvar != NULL; cvar = cvar->m_Next)
+	decltype(cvarMap)::Iterator it(cvarMap);
+	decltype(cvarMap)::Pair *pair;
+	while (it.NextPair(pair))
 	{
+		auto cvar = pair->Value;
 		if ((cvar->Flags & (CVAR_SERVERINFO|CVAR_DEMOSAVE)) && !(cvar->Flags & CVAR_LATCH))
 		{
 			backup.Name = cvar->GetName();
@@ -1291,47 +1370,24 @@ void C_ForgetCVars (void)
 
 FBaseCVar *FindCVar (const char *var_name, FBaseCVar **prev)
 {
-	FBaseCVar *var;
-	FBaseCVar *dummy;
+	if (var_name == nullptr)
+		return nullptr;
 
-	if (var_name == NULL)
-		return NULL;
-
-	if (prev == NULL)
-		prev = &dummy;
-
-	var = CVars;
-	*prev = NULL;
-	while (var)
-	{
-		if (stricmp (var->GetName (), var_name) == 0)
-			break;
-		*prev = var;
-		var = var->m_Next;
-	}
-	return var;
+	FName vname(var_name, true);
+	if (vname == NAME_None) return nullptr;
+	auto find = cvarMap.CheckKey(vname);
+	return find? *find : nullptr;
 }
 
 FBaseCVar *FindCVarSub (const char *var_name, int namelen)
 {
-	FBaseCVar *var;
-
 	if (var_name == NULL)
 		return NULL;
 
-	var = CVars;
-	while (var)
-	{
-		const char *probename = var->GetName ();
-
-		if (strnicmp (probename, var_name, namelen) == 0 &&
-			probename[namelen] == 0)
-		{
-			break;
-		}
-		var = var->m_Next;
-	}
-	return var;
+	FName vname(var_name, namelen, true);
+	if (vname == NAME_None) return nullptr;
+	auto find = cvarMap.CheckKey(vname);
+	return find ? *find : nullptr;
 }
 
 FBaseCVar *GetCVar(int playernum, const char *cvarname)
@@ -1396,26 +1452,24 @@ void UnlatchCVars (void)
 
 void DestroyCVarsFlagged (uint32_t flags)
 {
-	FBaseCVar *cvar = CVars;
-	FBaseCVar *next = cvar;
-
-	while(cvar)
+	decltype(cvarMap)::Iterator it(cvarMap);
+	decltype(cvarMap)::Pair *pair;
+	while (it.NextPair(pair))
 	{
-		next = cvar->m_Next;
+		auto cvar = pair->Value;
 
 		if(cvar->Flags & flags)
 			delete cvar;
-
-		cvar = next;
 	}
 }
 
 void C_SetCVarsToDefaults (void)
 {
-	FBaseCVar *cvar = CVars;
-
-	while (cvar)
+	decltype(cvarMap)::Iterator it(cvarMap);
+	decltype(cvarMap)::Pair *pair;
+	while (it.NextPair(pair))
 	{
+		auto cvar = pair->Value;
 		// Only default save-able cvars
 		if (cvar->Flags & CVAR_ARCHIVE)
 		{
@@ -1424,7 +1478,6 @@ void C_SetCVarsToDefaults (void)
 			val = cvar->GetFavoriteRepDefault (&type);
 			cvar->SetGenericRep (val, type);
 		}
-		cvar = cvar->m_Next;
 	}
 }
 
@@ -1437,18 +1490,19 @@ static int cvarcmp(const void* a, const void* b)
 
 void C_ArchiveCVars (FConfigFile *f, uint32_t filter)
 {
-	FBaseCVar *cvar = CVars;
 	TArray<FBaseCVar*> cvarlist;
 
-	while (cvar)
+	decltype(cvarMap)::Iterator it(cvarMap);
+	decltype(cvarMap)::Pair *pair;
+	while (it.NextPair(pair))
 	{
+		auto cvar = pair->Value;
 		if ((cvar->Flags &
 			(CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_MOD|CVAR_AUTO|CVAR_USERINFO|CVAR_SERVERINFO|CVAR_NOSAVE|CVAR_CONFIG_ONLY))
 			== filter)
 		{
 			cvarlist.Push(cvar);
 		}
-		cvar = cvar->m_Next;
 	}
 	qsort(cvarlist.Data(), cvarlist.Size(), sizeof(FBaseCVar*), cvarcmp);
 	for (auto cv : cvarlist)
@@ -1592,11 +1646,13 @@ CCMD (toggle)
 
 void FBaseCVar::ListVars (const char *filter, bool plain)
 {
-	FBaseCVar *var = CVars;
 	int count = 0;
 
-	while (var)
+	decltype(cvarMap)::Iterator it(cvarMap);
+	decltype(cvarMap)::Pair *pair;
+	while (it.NextPair(pair))
 	{
+		auto var = pair->Value;
 		if (CheckWildcards (filter, var->GetName()))
 		{
 			uint32_t flags = var->GetFlags();
@@ -1625,7 +1681,6 @@ void FBaseCVar::ListVars (const char *filter, bool plain)
 					var->GetHumanString());
 			}
 		}
-		var = var->m_Next;
 	}
 	Printf ("%d cvars\n", count);
 }
@@ -1667,15 +1722,15 @@ CCMD (archivecvar)
 
 void C_ListCVarsWithoutDescription()
 {
-	FBaseCVar* var = CVars;
-
-	while (var)
+	decltype(cvarMap)::Iterator it(cvarMap);
+	decltype(cvarMap)::Pair *pair;
+	while (it.NextPair(pair))
 	{
+		auto var = pair->Value;
 		if (var->GetDescription().IsEmpty())
 		{
 			Printf("%s\n", var->GetName());
 		}
-		var = var->m_Next;
 	}
 }
 

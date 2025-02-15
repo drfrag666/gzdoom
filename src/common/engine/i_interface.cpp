@@ -50,8 +50,8 @@ CUSTOM_CVAR(Bool, ui_classic, true, CVAR_ARCHIVE | CVAR_NOINITCALL)
 		ui_generic = false;
 	DisableGenericUI(self);
 	language = "auto";
-	vid_scalemode.Callback();
-	vid_scalefactor.Callback();
+	vid_scalemode->Callback();
+	vid_scalefactor->Callback();
 }
 
 CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
