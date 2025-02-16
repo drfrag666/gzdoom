@@ -5,8 +5,8 @@
 #include "i_modelvertexbuffer.h"
 #include "matrix.h"
 #include "TRS.h"
-#include "d_player.h"
 
+class DBoneComponents;
 class FModelRenderer;
 class FGameTexture;
 class IModelVertexBuffer;
@@ -77,12 +77,13 @@ public:
 	virtual void AddSkins(uint8_t *hitlist, const FTextureID* surfaceskinids) = 0;
 	virtual float getAspectFactor(float vscale) { return 1.f; }
 	virtual const TArray<TRS>* AttachAnimationData() { return nullptr; };
-	virtual const TArray<VSMatrix> CalculateBones(int frame1, int frame2, double inter, const TArray<TRS>& animationData, AActor* actor, int index) { return {}; };
+	virtual const TArray<VSMatrix> CalculateBones(int frame1, int frame2, double inter, const TArray<TRS>& animationData, DBoneComponents* bones, int index) { return {}; };
 
 	void SetVertexBuffer(int type, IModelVertexBuffer *buffer) { mVBuf[type] = buffer; }
 	IModelVertexBuffer *GetVertexBuffer(int type) const { return mVBuf[type]; }
 	void DestroyVertexBuffer();
 
+	bool hasSurfaces = false;
 	FString mFileName;
 
 private:
@@ -90,5 +91,5 @@ private:
 };
 
 int ModelFrameHash(FSpriteModelFrame* smf);
-unsigned FindModel(const char* path, const char* modelfile);
+unsigned FindModel(const char* path, const char* modelfile, bool silent = false);
 

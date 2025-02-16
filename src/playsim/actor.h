@@ -47,8 +47,7 @@
 #include "g_level.h"
 #include "tflags.h"
 #include "portal.h"
-#include "matrix.h"
-#include "TRS.h"
+#include "bonecomponents.h"
 
 struct subsector_t;
 struct FBlockNode;
@@ -430,6 +429,7 @@ enum ActorFlag8
 	MF8_CROSSLINECHECK	= 0x10000000,	// [MC]Enables CanCrossLine virtual
 	MF8_MASTERNOSEE		= 0x20000000,	// Don't show object in first person if their master is the current camera.
 	MF8_ADDLIGHTLEVEL	= 0x40000000,	// [MC] Actor light level is additive with sector.
+	MF8_ONLYSLAMSOLID	= 0x80000000,	// [B] Things with skullfly will ignore non-solid Actors.
 };
 
 // --- mobj.renderflags ---
@@ -689,16 +689,6 @@ public:
 
 	DActorModelData() = default;
 	virtual void Serialize(FSerializer& arc) override;
-};
-
-class DBoneComponents : public DObject
-{
-	DECLARE_CLASS(DBoneComponents, DObject);
-public:
-	TArray<TArray<TRS>>			trscomponents;
-	TArray<TArray<VSMatrix>>	trsmatrix;
-
-	DBoneComponents() = default;
 };
 
 class DViewPosition : public DObject

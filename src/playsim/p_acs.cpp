@@ -623,7 +623,7 @@ inline DAngle ACSToAngle(int acsval)
 
 inline int AngleToACS(DAngle ang)
 {
-	return ang.Q16();
+	return ang.Normalized360().Q16();
 }
 
 inline int PitchToACS(DAngle ang)

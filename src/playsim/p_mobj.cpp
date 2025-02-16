@@ -159,7 +159,6 @@ CVAR (Int, cl_bloodtype, 0, CVAR_ARCHIVE);
 // CODE --------------------------------------------------------------------
 
 IMPLEMENT_CLASS(DActorModelData, false, false);
-IMPLEMENT_CLASS(DBoneComponents, false, false);
 IMPLEMENT_CLASS(AActor, false, true)
 
 IMPLEMENT_POINTERS_START(AActor)
@@ -3141,6 +3140,12 @@ DEFINE_ACTION_FUNCTION(AActor, Howl)
 
 bool AActor::Slam (AActor *thing)
 {
+	if ((flags8 & MF8_ONLYSLAMSOLID)
+		&& !(thing->flags & MF_SOLID) && !(thing->flags & MF_SHOOTABLE))
+	{
+		return true;
+	}
+
 	flags &= ~MF_SKULLFLY;
 	Vel.Zero();
 	if (health > 0)
@@ -3153,8 +3158,13 @@ bool AActor::Slam (AActor *thing)
 			// The charging monster may have died by the target's actions here.
 			if (health > 0)
 			{
-				if (SeeState != NULL && !(flags8 & MF8_RETARGETAFTERSLAM)) SetState (SeeState);
-				else SetIdle();
+				FState *slam = FindState(NAME_Slam);
+				if (slam != NULL)
+					SetState(slam);
+				else if (SeeState != NULL && !(flags8 & MF8_RETARGETAFTERSLAM))
+					SetState (SeeState);
+				else
+					SetIdle();
 			}
 		}
 		else
