@@ -810,6 +810,9 @@ public:
 	// plays bouncing sound
 	void PlayBounceSound(bool onfloor);
 
+	// plays pushing sound
+	void PlayPushSound();
+
 	// Called when an actor with MF_MISSILE and MF2_FLOORBOUNCE hits the floor
 	bool FloorBounceMissile (secplane_t &plane);
 

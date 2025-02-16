@@ -66,6 +66,7 @@
 #include "teaminfo.h"
 #include "i_time.h"
 #include "shiftstate.h"
+#include "s_music.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 
 EXTERN_CVAR(Int, cl_gfxlocalization)
@@ -294,6 +295,14 @@ void System_M_Dim()
 }
 
 
+static void M_Quit()
+{
+	S_StopAllChannels();
+	S_StopMusic(true);
+	CleanSWDrawer();
+	ST_Endoom();
+}
+
 //=============================================================================
 //
 //
@@ -304,8 +313,7 @@ CCMD (menu_quit)
 {	// F10
 	if (m_quickexit)
 	{
-		CleanSWDrawer();
-		ST_Endoom();
+		M_Quit();
 	}
 
 	M_StartControlPanel (true);
@@ -336,8 +344,7 @@ CCMD (menu_quit)
 				I_WaitVBL(105);
 			}
 		}
-		CleanSWDrawer();
-		ST_Endoom();
+		M_Quit();
 	});
 
 
@@ -611,9 +618,9 @@ void M_StartupEpisodeMenu(FNewGameStartup *gs)
 			// center the menu on the screen if the top space is larger than the bottom space
 			int totalheight = posy + AllEpisodes.Size() * spacing - topy;
 
-			if (totalheight < 190 || AllEpisodes.Size() == 1)
+			if (ld->mForceList || totalheight < 190 || AllEpisodes.Size() == 1)
 			{
-				int newtop = (200 - totalheight) / 2;
+				int newtop = max(10, 200 - totalheight) / 2;
 				int topdelta = newtop - topy;
 				if (topdelta < 0)
 				{
@@ -755,9 +762,9 @@ static void BuildPlayerclassMenu()
 				ld->mAutoselect = ld->mItems.Push(it);
 				success = true;
 			}
-			else if (totalheight <= 190)
+			else if (ld->mForceList || totalheight <= 190)
 			{
-				int newtop = (200 - totalheight + topy) / 2;
+				int newtop = (max(10, 200 - totalheight) + topy) / 2;
 				int topdelta = newtop - topy;
 				if (topdelta < 0)
 				{
@@ -1141,9 +1148,9 @@ void M_StartupSkillMenu(FNewGameStartup *gs)
 				// center the menu on the screen if the top space is larger than the bottom space
 				int totalheight = posy + MenuSkills.Size() * spacing - topy;
 
-				if (totalheight < 190 || MenuSkills.Size() == 1)
+				if (ld->mForceList || totalheight < 190 || MenuSkills.Size() == 1)
 				{
-					int newtop = (200 - totalheight) / 2;
+					int newtop = max(10, 200 - totalheight) / 2;
 					int topdelta = newtop - topy;
 					if (topdelta < 0)
 					{

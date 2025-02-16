@@ -278,6 +278,7 @@ class Actor : Thinker native
 	meta double MissileHeight;
 	meta Name MissileName;
 	meta double FastSpeed;		// speed in fast mode
+	meta Sound PushSound;		// Sound being played when pushed by something
 
 	// todo: implement access to native meta properties.
 	// native meta int infighting_group;
@@ -323,6 +324,7 @@ class Actor : Thinker native
 	property DeathSound: DeathSound;
 	property ActiveSound: ActiveSound;
 	property CrushPainSound: CrushPainSound;
+	property PushSound: PushSound;
 	property Alpha: Alpha;
 	property MaxTargetRange: MaxTargetRange;
 	property MeleeThreshold: MeleeThreshold;
@@ -468,6 +470,7 @@ class Actor : Thinker native
 		MarkSound(CrushPainSound);
 		MarkSound(HowlSound);
 		MarkSound(MeleeSound);
+		MarkSound(PushSound);
 	}
 
 	bool IsPointerEqual(int ptr_select1, int ptr_select2)
@@ -805,6 +808,21 @@ class Actor : Thinker native
 	native clearscope double GetCameraHeight() const;
 	native clearscope double GetGravity() const;
 	native void DoMissileDamage(Actor target);
+	native void PlayPushSound();
+
+	clearscope double PitchTo(Actor target, double zOfs = 0, double targZOfs = 0, bool absolute = false) const
+	{
+		Vector3 origin = (pos.xy, pos.z - floorClip + zOfs);
+		Vector3 dest = (target.pos.xy, target.pos.z - target.floorClip + targZOfs);
+
+		Vector3 diff;
+		if (!absolute)
+			diff = level.Vec3Diff(origin, dest);
+		else
+			diff = dest - origin;
+
+		return -atan2(diff.z, diff.xy.Length());
+	}
 
 	//==========================================================================
 	//

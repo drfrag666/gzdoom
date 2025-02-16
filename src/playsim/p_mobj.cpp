@@ -3313,6 +3313,22 @@ DEFINE_ACTION_FUNCTION(AActor, PlayActiveSound)
 	return 0;
 }
 
+void AActor::PlayPushSound()
+{
+	FSoundID push = SoundVar(NAME_PushSound);
+	if (!S_IsActorPlayingSomething(this, CHAN_BODY, push))
+	{
+		S_Sound(this, CHAN_BODY, 0, push, 1, ATTN_NORM);
+	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, PlayPushSound)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->PlayPushSound();
+	return 0;
+}
+
 bool AActor::IsOkayToAttack (AActor *link)
 {
 	// Standard things to eliminate: an actor shouldn't attack itself,

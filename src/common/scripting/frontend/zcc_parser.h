@@ -138,6 +138,7 @@ enum EZCCTreeNodeType
 	AST_FlagDef,
 	AST_MixinDef,
 	AST_MixinStmt,
+	AST_ArrayIterationStmt,
 
 	NUM_AST_NODE_TYPES
 };
@@ -158,6 +159,7 @@ enum EZCCBuiltinType
 	ZCC_String,
 	ZCC_Vector2,
 	ZCC_Vector3,
+	ZCC_Vector4,
 	ZCC_Name,
 
 	ZCC_Color,		// special types for ZDoom.
@@ -442,7 +444,7 @@ struct ZCC_ExprTrinary : ZCC_Expression
 
 struct ZCC_VectorValue : ZCC_Expression
 {
-	ZCC_Expression *X, *Y, *Z;
+	ZCC_Expression *X, *Y, *Z, *W;
 };
 
 struct ZCC_Statement : ZCC_TreeNode
@@ -489,6 +491,13 @@ struct ZCC_IterationStmt : ZCC_Statement
 	// start of the loop (before the LoopStatement)
 	// or at the end (after the LoopStatement)?
 	enum { Start, End } CheckAt;
+};
+
+struct ZCC_ArrayIterationStmt : ZCC_Statement
+{
+	ZCC_VarName* ItName;
+	ZCC_Expression* ItArray;
+	ZCC_Statement* LoopStatement;
 };
 
 struct ZCC_IfStmt : ZCC_Statement
