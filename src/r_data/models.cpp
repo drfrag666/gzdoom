@@ -352,9 +352,18 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			auto& ssids = surfaceskinids.Size() > 0 ? surfaceskinids : smf->surfaceskinIDs;
 			auto ssidp = (unsigned)(i * MD3_MAX_SURFACES) < ssids.Size() ? &ssids[i * MD3_MAX_SURFACES] : nullptr;
 
-			const TArray<VSMatrix>* animationData = nullptr;
+			const TArray<TRS>* animationData = nullptr;
 
 			bool nextFrame = smfNext && modelframe != modelframenext;
+
+			if (actor->boneComponentData == nullptr)
+			{
+				auto ptr = Create<DBoneComponents>();
+				ptr->trscomponents.Resize(modelsamount);
+				ptr->trsmatrix.Resize(modelsamount);
+				actor->boneComponentData = ptr;
+				GC::WriteBarrier(actor, ptr);
+			}
 
 			if (animationid >= 0)
 			{
@@ -363,7 +372,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 
 				if (!(smf->flags & MDL_MODELSAREATTACHMENTS) || evaluatedSingle == false)
 				{
-					boneData = animation->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, *animationData);
+					boneData = animation->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, *animationData, actor, i);
 					boneStartingPosition = renderer->SetupFrame(animation, 0, 0, 0, boneData, -1);
 					evaluatedSingle = true;
 				}
@@ -372,7 +381,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			{
 				if (!(smf->flags & MDL_MODELSAREATTACHMENTS) || evaluatedSingle == false)
 				{
-					boneData = mdl->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, *animationData);
+					boneData = mdl->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, *animationData, actor, i);
 					boneStartingPosition = renderer->SetupFrame(mdl, 0, 0, 0, boneData, -1);
 					evaluatedSingle = true;
 				}
@@ -920,7 +929,7 @@ bool IsHUDModelForPlayerAvailable (player_t * player)
 	// [MK] check that at least one psprite uses models
 	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
 	{
-		FSpriteModelFrame *smf = psp->Caller != nullptr ? FindModelFrame(psp->Caller->GetClass(), psp->GetSprite(), psp->GetFrame(), false) : nullptr;
+		FSpriteModelFrame *smf = psp->Caller != nullptr ? FindModelFrame(psp->Caller->modelData != nullptr ? psp->Caller->modelData->modelDef != NAME_None ? PClass::FindActor(psp->Caller->modelData->modelDef) : psp->Caller->GetClass() : psp->Caller->GetClass(), psp->GetSprite(), psp->GetFrame(), false) : nullptr;
 		if ( smf != nullptr ) return true;
 	}
 	return false;

@@ -159,6 +159,7 @@ CVAR (Int, cl_bloodtype, 0, CVAR_ARCHIVE);
 // CODE --------------------------------------------------------------------
 
 IMPLEMENT_CLASS(DActorModelData, false, false);
+IMPLEMENT_CLASS(DBoneComponents, false, false);
 IMPLEMENT_CLASS(AActor, false, true)
 
 IMPLEMENT_POINTERS_START(AActor)
@@ -174,6 +175,7 @@ IMPLEMENT_POINTERS_START(AActor)
 	IMPLEMENT_POINTER(alternative)
 	IMPLEMENT_POINTER(ViewPos)
 	IMPLEMENT_POINTER(modelData)
+	IMPLEMENT_POINTER(boneComponentData)
 IMPLEMENT_POINTERS_END
 
 AActor::~AActor ()
@@ -5524,7 +5526,12 @@ void SetMobj (FLevelLocals *Level, AActor *mobj, const FMapThing *mthing, const 
 	else
 		mobj->health = -int(mthing->Health);
 	if (mthing->Health == 0)
-		mobj->CallDie(NULL, NULL);
+	{
+		// We cannot call 'Die' here directly because the level is not yet fully set up.
+		// This needs to be delayed by one tic.
+		auto state = mobj->FindState(NAME_DieFromSpawn);
+		if (state) mobj->SetState(state, true);
+	}
 	else if (mthing->Health != 1)
 		mobj->StartHealth = mobj->health;
 }

@@ -35,6 +35,7 @@
 
 #include "vectors.h"
 #include "doomdef.h"
+#include "renderstyle.h"
 
 enum
 {
@@ -65,6 +66,12 @@ struct particle_t
 	int		color;
 	uint16_t	tnext;
 	uint16_t	snext;
+	FTextureID texture;
+	ERenderStyle style;
+	double Roll;
+	double RollVel;
+	double RollAcc;
+	bool doRoll;
 };
 
 const uint16_t NO_PARTICLE = 0xffff;
@@ -80,7 +87,7 @@ particle_t *JitterParticle (FLevelLocals *Level, int ttl);
 particle_t *JitterParticle (FLevelLocals *Level, int ttl, double drift);
 
 void P_ThinkParticles (FLevelLocals *Level);
-void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size, double fadestep, double sizestep, int flags = 0);
+void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size, double fadestep, double sizestep, int flags = 0, FTextureID texture = FNullTextureID(), ERenderStyle style = STYLE_None, double startroll = 0, double rollvel = 0, double rollacc = 0);
 void P_InitEffects (void);
 
 void P_RunEffect (AActor *actor, int effects);

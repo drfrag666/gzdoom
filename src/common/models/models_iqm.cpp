@@ -5,6 +5,7 @@
 #include "texturemanager.h"
 #include "modelrenderer.h"
 #include "engineerrors.h"
+#include "r_utility.h"
 
 IQMModel::IQMModel()
 {
@@ -58,8 +59,11 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 		uint32_t num_extensions = reader.ReadUInt32();
 		uint32_t ofs_extensions = reader.ReadUInt32();
 
-		if (num_meshes <= 0)
-			I_FatalError("Invalid model: \"%s%s\", no mesh data is unsupported", path, fileSystem.GetLongName(mLumpNum).GetChars());
+		if (num_joints <= 0)
+		{
+			Printf("Invalid model: \"%s%s\", no joint data is present\n", path, fileSystem.GetLongName(mLumpNum).GetChars());
+			return false;
+		}
 
 		if (num_text == 0)
 			return false;
@@ -168,18 +172,10 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 			{
 				baseframe[i] = m;
 				inversebaseframe[i] = invm;
-			}
+			}			
 		}
 
-		// Swap YZ axis as we did that with the vertices down in LoadGeometry.
-		// This is an unfortunate side effect of the coordinate system in the gzdoom model rendering system
-		float swapYZ[16] = { 0.0f };
-		swapYZ[0 + 0 * 4] = 1.0f;
-		swapYZ[1 + 2 * 4] = 1.0f;
-		swapYZ[2 + 1 * 4] = 1.0f;
-		swapYZ[3 + 3 * 4] = 1.0f;
-
-		FrameTransforms.Resize(num_frames * num_poses);
+		TRSData.Resize(num_frames * num_poses);
 		reader.SeekTo(ofs_frames);
 		for (uint32_t i = 0; i < num_frames; i++)
 		{
@@ -204,39 +200,9 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 				scale.Y = p.ChannelOffset[8]; if (p.ChannelMask & 0x100) scale.Y += reader.ReadUInt16() * p.ChannelScale[8];
 				scale.Z = p.ChannelOffset[9]; if (p.ChannelMask & 0x200) scale.Z += reader.ReadUInt16() * p.ChannelScale[9];
 
-				VSMatrix m;
-				m.loadIdentity();
-				m.translate(translate.X, translate.Y, translate.Z);
-				m.multQuaternion(quaternion);
-				m.scale(scale.X, scale.Y, scale.Z);
-
-				// Concatenate each pose with the inverse base pose to avoid doing this at animation time.
-				// If the joint has a parent, then it needs to be pre-concatenated with its parent's base pose.
-				// Thus it all negates at animation time like so: 
-				//   (parentPose * parentInverseBasePose) * (parentBasePose * childPose * childInverseBasePose) =>
-				//   parentPose * (parentInverseBasePose * parentBasePose) * childPose * childInverseBasePose =>
-				//   parentPose * childPose * childInverseBasePose
-				VSMatrix& result = FrameTransforms[i * num_poses + j];
-				if (p.Parent >= 0)
-				{
-					result = baseframe[p.Parent];
-					result.multMatrix(m);
-					result.multMatrix(inversebaseframe[j]);
-				}
-				else
-				{
-					result = m;
-					result.multMatrix(inversebaseframe[j]);
-				}
-			}
-
-			for (uint32_t j = 0; j < num_poses; j++)
-			{
-				VSMatrix m;
-				m.loadMatrix(swapYZ);
-				m.multMatrix(FrameTransforms[i * num_poses + j]);
-				m.multMatrix(swapYZ);
-				FrameTransforms[i * num_poses + j] = m;
+				TRSData[i * num_poses + j].translation = translate;
+				TRSData[i * num_poses + j].rotation = quaternion;
+				TRSData[i * num_poses + j].scaling = scale;
 			}
 		}
 
@@ -244,7 +210,7 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 		if (num_frames <= 0)
 		{
 			num_frames = 1;
-			FrameTransforms.Resize(num_joints);
+			TRSData.Resize(num_joints);
 
 			for (uint32_t j = 0; j < num_joints; j++)
 			{
@@ -265,33 +231,9 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 				scale.Y = Joints[j].Scale.Y;
 				scale.Z = Joints[j].Scale.Z;
 
-				VSMatrix m;
-				m.loadIdentity();
-				m.translate(translate.X, translate.Y, translate.Z);
-				m.multQuaternion(quaternion);
-				m.scale(scale.X, scale.Y, scale.Z);
-
-				VSMatrix& result = FrameTransforms[j];
-				if (Joints[j].Parent >= 0)
-				{
-					result = baseframe[Joints[j].Parent];
-					result.multMatrix(m);
-					result.multMatrix(inversebaseframe[j]);
-				}
-				else
-				{
-					result = m;
-					result.multMatrix(inversebaseframe[j]);
-				}
-			}
-
-			for (uint32_t j = 0; j < num_joints; j++)
-			{
-				VSMatrix m;
-				m.loadMatrix(swapYZ);
-				m.multMatrix(FrameTransforms[j]);
-				m.multMatrix(swapYZ);
-				FrameTransforms[j] = m;
+				TRSData[j].translation = translate;
+				TRSData[j].rotation = quaternion;
+				TRSData[j].scaling = scale;
 			}
 		}
 
@@ -511,24 +453,25 @@ void IQMModel::RenderFrame(FModelRenderer* renderer, FGameTexture* skin, int fra
 			{
 				meshSkin = TexMan.GetGameTexture(surfaceskinids[i], true);
 			}
-			else if (!Meshes[i].Skin.isValid())
+			else if (Meshes[i].Skin.isValid())
+			{
+				meshSkin = TexMan.GetGameTexture(Meshes[i].Skin, true);
+			}	
+			else
 			{
 				continue;
 			}
-			else 
-			{
-				meshSkin = TexMan.GetGameTexture(Meshes[i].Skin, true);
-			}
-			if (!meshSkin) continue;
 		}
 
-		if (meshSkin != lastSkin)
+		if (meshSkin->isValid())
 		{
-			renderer->SetMaterial(meshSkin, false, translation);
-			lastSkin = meshSkin;
+			if (meshSkin != lastSkin)
+			{
+				renderer->SetMaterial(meshSkin, false, translation);
+				lastSkin = meshSkin;
+			}
+			renderer->DrawElements(Meshes[i].NumTriangles * 3, Meshes[i].FirstTriangle * 3 * sizeof(unsigned int));
 		}
-
-		renderer->DrawElements(Meshes[i].NumTriangles * 3, Meshes[i].FirstTriangle * 3 * sizeof(unsigned int));
 	}
 }
 
@@ -562,16 +505,21 @@ void IQMModel::AddSkins(uint8_t* hitlist, const FTextureID* surfaceskinids)
 	}
 }
 
-const TArray<VSMatrix>* IQMModel::AttachAnimationData()
+const TArray<TRS>* IQMModel::AttachAnimationData()
 {
-	return &FrameTransforms;
+	return &TRSData;
 }
 
-const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double inter, const TArray<VSMatrix>& animationData)
+const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double inter, const TArray<TRS>& animationData, AActor* actor, int index)
 {
-	const TArray<VSMatrix>& animationFrames = &animationData ? animationData : FrameTransforms;
+	const TArray<TRS>& animationFrames = &animationData ? animationData : TRSData;
 
 	int numbones = Joints.Size();
+
+	if(actor->boneComponentData->trscomponents[index].Size() != numbones)
+		actor->boneComponentData->trscomponents[index].Resize(numbones);
+	if (actor->boneComponentData->trsmatrix[index].Size() != numbones)
+		actor->boneComponentData->trsmatrix[index].Resize(numbones);
 
 	frame1 = clamp(frame1, 0, ((int)animationFrames.Size() - 1) / numbones);
 	frame2 = clamp(frame2, 0, ((int)animationFrames.Size() - 1) / numbones);
@@ -581,29 +529,77 @@ const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double i
 	float t = (float)inter;
 	float invt = 1.0f - t;
 
+	float swapYZ[16] = { 0.0f };
+	swapYZ[0 + 0 * 4] = 1.0f;
+	swapYZ[1 + 2 * 4] = 1.0f;
+	swapYZ[2 + 1 * 4] = 1.0f;
+	swapYZ[3 + 3 * 4] = 1.0f;
+
 	TArray<VSMatrix> bones(numbones, true);
+	TArray<bool> modifiedBone(numbones, true);
 	for (int i = 0; i < numbones; i++)
 	{
-		const float* from = animationFrames[offset1 + i].get();
-		const float* to = animationFrames[offset2 + i].get();
+		TRS bone;
+		TRS from = animationFrames[offset1 + i];
+		TRS to = animationFrames[offset2 + i];
 
-		// Interpolate bone between the two frames
-		float bone[16];
-		for (int j = 0; j < 16; j++)
+		bone.translation = from.translation * invt + to.translation * t;
+		bone.rotation = from.rotation * invt;
+		if ((bone.rotation | to.rotation * t) < 0)
 		{
-			bone[j] = from[j] * invt + to[j] * t;
+			bone.rotation.X *= -1; bone.rotation.Y *= -1; bone.rotation.Z *= -1; bone.rotation.W *= -1;
 		}
+		bone.rotation += to.rotation * t;
+		bone.rotation.MakeUnit();
+		bone.scaling = from.scaling * invt + to.scaling * t;
 
-		// Apply parent bone
-		if (Joints[i].Parent >= 0)
+		if (Joints[i].Parent >= 0 && modifiedBone[Joints[i].Parent])
 		{
-			bones[i] = bones[Joints[i].Parent];
-			bones[i].multMatrix(bone);
+			actor->boneComponentData->trscomponents[index][i] = bone;
+			modifiedBone[i] = true;
+		}
+		else if (actor->boneComponentData->trscomponents[index][i].Equals(bone))
+		{
+			bones[i] = actor->boneComponentData->trsmatrix[index][i];
+			modifiedBone[i] = false;
+			continue;
 		}
 		else
 		{
-			bones[i].loadMatrix(bone);
+			actor->boneComponentData->trscomponents[index][i] = bone;
+			modifiedBone[i] = true;
 		}
+
+		VSMatrix m;
+		m.loadIdentity();
+		m.translate(bone.translation.X, bone.translation.Y, bone.translation.Z);
+		m.multQuaternion(bone.rotation);
+		m.scale(bone.scaling.X, bone.scaling.Y, bone.scaling.Z);
+
+		VSMatrix& result = bones[i];
+		if (Joints[i].Parent >= 0)
+		{
+			result = bones[Joints[i].Parent];
+			result.multMatrix(baseframe[Joints[i].Parent]);
+			result.multMatrix(m);
+			result.multMatrix(inversebaseframe[i]);
+		}
+		else
+		{
+			result = m;
+			result.multMatrix(inversebaseframe[i]);
+		}
+	}
+
+	actor->boneComponentData->trsmatrix[index] = bones;
+
+	for (int j = 0; j < numbones; j++)
+	{
+		VSMatrix m;
+		m.loadMatrix(swapYZ);
+		m.multMatrix(bones[j]);
+		m.multMatrix(swapYZ);
+		bones[j] = m;
 	}
 
 	return bones;
