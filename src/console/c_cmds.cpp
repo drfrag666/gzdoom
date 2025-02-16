@@ -70,6 +70,7 @@
 #include "texturemanager.h"
 #include "v_draw.h"
 #include "d_main.h"
+#include "savegamemanager.h"
 
 extern FILE *Logfile;
 extern bool insave;
@@ -633,8 +634,27 @@ UNSAFE_CCMD (load)
 		return;
 	}
 	FString fname = argv[1];
-	DefaultExtension (fname, "." SAVEGAME_EXT);
-    G_LoadGame (fname);
+	FixPathSeperator(fname);
+	if (fname[0] == '/')
+	{
+		Printf("saving to an absolute path is not allowed\n");
+		return;
+	}
+	if (fname.IndexOf("..") > 0)
+	{
+		Printf("'..' not allowed in file names\n");
+		return;
+	}
+#ifdef _WIN32
+	// block all invalid characters for Windows file names
+	if (fname.IndexOfAny(":?*<>|") >= 0)
+	{
+		Printf("file name contains invalid characters\n");
+		return;
+	}
+#endif
+	fname = G_BuildSaveName(fname);
+	G_LoadGame (fname);
 }
 
 //==========================================================================
@@ -645,27 +665,37 @@ UNSAFE_CCMD (load)
 //
 //==========================================================================
 
-UNSAFE_CCMD (save)
+UNSAFE_CCMD(save)
 {
-    if (argv.argc() != 2)
+	if (argv.argc() < 2 || argv.argc() > 3 || argv[1][0] == 0)
 	{
-        Printf ("usage: save <description>\n");
+        Printf ("usage: save <filename> [description]\n");
         return;
     }
-
 	doquicksave = false;
 
-	FString fname;
-	for (int i = 0;; ++i)
+	FString fname = argv[1];
+	FixPathSeperator(fname);
+	if (fname[0] == '/')
 	{
-		fname = G_BuildSaveName("save", i);
-		if (!FileExists(fname))
-		{
-			break;
-		}
+		Printf("saving to an absolute path is not allowed\n");
+		return;
 	}
-	DefaultExtension (fname, "." SAVEGAME_EXT);
-	G_SaveGame (fname, argv[1]);
+	if (fname.IndexOf("..") > 0)
+	{
+		Printf("'..' not allowed in file names\n");
+		return;
+	}
+#ifdef _WIN32
+	// block all invalid characters for Windows file names
+	if (fname.IndexOfAny(":?*<>|") >= 0)
+	{
+		Printf("file name contains invalid characters\n");
+		return;
+	}
+#endif
+    fname = G_BuildSaveName(fname);
+	G_SaveGame (fname, argv.argc() > 2 ? argv[2] : argv[1]);
 }
 
 

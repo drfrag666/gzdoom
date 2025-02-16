@@ -3034,6 +3034,7 @@ static FILE* D_GetHashFile()
 
 static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArray<FString>& pwads)
 {
+	SavegameFolder = iwad_info->Autoname;
 	gameinfo.gametype = iwad_info->gametype;
 	gameinfo.flags = iwad_info->flags;
 	gameinfo.nokeyboardcheats = iwad_info->nokeyboardcheats;
@@ -3442,10 +3443,12 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 		v = Args->CheckValue ("-loadgame");
 		if (v)
 		{
-			FString file(v);
-			FixPathSeperator (file);
-			DefaultExtension (file, "." SAVEGAME_EXT);
-			G_LoadGame (file);
+			FString file = G_BuildSaveName(v);
+			if (!FileExists(file))
+			{
+				I_FatalError("Cannot find savegame %s", file.GetChars());
+			}
+			G_LoadGame(file);
 		}
 
 		v = Args->CheckValue("-playdemo");
@@ -3621,19 +3624,6 @@ static int D_DoomMain_Internal (void)
 
 	// Now that we have the IWADINFO, initialize the autoload ini sections.
 	GameConfig->DoAutoloadSetup(iwad_man);
-
-	// Prevent the game from starting if the savegame passed to -loadgame is invalid
-	v = Args->CheckValue("-loadgame");
-	if (v)
-	{
-		FString file(v);
-		FixPathSeperator(file);
-		DefaultExtension(file, "." SAVEGAME_EXT);
-		if (!FileExists(file))
-		{
-			I_FatalError("Cannot find savegame %s", file.GetChars());
-		}
-	}
 
 	// reinit from here
 
