@@ -1076,7 +1076,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomMeleeAttack)
 	A_FaceTarget (self);
 	if (P_CheckMeleeRange(self))
 	{
-		if (meleesound)
+		if (meleesound.isvalid())
 			S_Sound (self, CHAN_WEAPON, 0, meleesound, 1, ATTN_NORM);
 		int newdam = P_DamageMobj (self->target, self, self, damage, damagetype);
 		if (bleed)
@@ -1084,7 +1084,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomMeleeAttack)
 	}
 	else
 	{
-		if (misssound)
+		if (misssound.isvalid())
 			S_Sound (self, CHAN_WEAPON, 0, misssound, 1, ATTN_NORM);
 	}
 	return 0;
@@ -1113,7 +1113,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomComboAttack)
 	{
 		if (damagetype == NAME_None)
 			damagetype = NAME_Melee;	// Melee is the default type
-		if (meleesound)
+		if (meleesound.isvalid())
 			S_Sound (self, CHAN_WEAPON, 0, meleesound, 1, ATTN_NORM);
 		int newdam = P_DamageMobj (self->target, self, self, damage, damagetype);
 		if (bleed)
@@ -1620,6 +1620,8 @@ enum SPFflag
 	SPF_RELANG =			1 << 4,
 	SPF_NOTIMEFREEZE =		1 << 5,
 	SPF_ROLL =				1 << 6,
+	SPF_REPLACE =           1 << 7,
+	SPF_NO_XY_BILLBOARD =	1 << 8,
 };
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticle)
@@ -5123,6 +5125,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 
 	if (self == nullptr)
 		ACTION_RETURN_BOOL(false);
+	else if (modeldef != NAME_None && PClass::FindClass(modeldef.GetChars()) == nullptr)
+	{
+		Printf("Attempt to pass invalid modeldef name %s in %s.", modeldef.GetChars(), self->GetCharacterName());
+		ACTION_RETURN_BOOL(false);
+	}
 	else if (modelindex < 0)
 	{
 		Printf("Attempt to pass invalid model index %d in %s, index must be non-negative.", modelindex, self->GetCharacterName());

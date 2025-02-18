@@ -723,16 +723,17 @@ ExpEmit FxVectorValue::Emit(VMFunctionBuilder *build)
 	{
 		if (e) vectorElements++;
 	}
-	assert(vectorElements > 0);
+	assert(vectorElements > 0 && vectorElements <= 4);
 
-	ExpEmit* tempVal = (ExpEmit*)calloc(vectorElements, sizeof(ExpEmit));
-	ExpEmit* val = (ExpEmit*)calloc(vectorElements, sizeof(ExpEmit));
+	// We got at most 4 elements
+	ExpEmit tempVal[4];
+	ExpEmit val[4];
 
 	// Init ExpEmit
 	for (int i = 0; i < vectorElements; ++i)
 	{
-		new(tempVal + i) ExpEmit(xyzw[i]->Emit(build));
-		new(val + i) ExpEmit(EmitKonst(build, tempVal[i]));
+		tempVal[i] = ExpEmit(xyzw[i]->Emit(build));
+		val[i] = EmitKonst(build, tempVal[i]);
 	}
 
 	{
@@ -1299,7 +1300,7 @@ FxExpression *FxStringCast::Resolve(FCompileContext &ctx)
 		if (basex->isConstant())
 		{
 			ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
-			FxExpression *x = new FxConstant(soundEngine->GetSoundName(constval.GetInt()), ScriptPosition);
+			FxExpression *x = new FxConstant(soundEngine->GetSoundName(FSoundID::fromInt(constval.GetInt())), ScriptPosition);
 			delete this;
 			return x;
 		}
@@ -1475,7 +1476,7 @@ FxExpression *FxSoundCast::Resolve(FCompileContext &ctx)
 		if (basex->isConstant())
 		{
 			ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
-			FxExpression *x = new FxConstant(FSoundID(constval.GetString()), ScriptPosition);
+			FxExpression *x = new FxConstant(S_FindSound(constval.GetString()), ScriptPosition);
 			delete this;
 			return x;
 		}
@@ -8204,6 +8205,8 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 
 	PContainerType *ccls = nullptr;
 
+	PFunction * afd_override = nullptr;
+
 	if (ctx.Class == nullptr)
 	{
 		// There's no way that a member function call can resolve to a constant so abort right away.
@@ -8277,7 +8280,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	if (Self->ValueType->isRealPointer())
 	{
 		auto pointedType = Self->ValueType->toPointer()->PointedType;
-		if (pointedType && pointedType->isDynArray())
+		if (pointedType && (pointedType->isDynArray() || pointedType->isMap() || pointedType->isMapIterator()))
 		{
 			Self = new FxOutVarDereference(Self, Self->ScriptPosition);
 			SAFE_RESOLVE(Self, ctx);
@@ -8453,7 +8456,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 				if (a->ValueType->isRealPointer())
 				{
 					auto pointedType = a->ValueType->toPointer()->PointedType;
-					if (pointedType && pointedType->isDynArray())
+					if (pointedType && (pointedType->isDynArray() || pointedType->isMap() || pointedType->isMapIterator()))
 					{
 						a = new FxOutVarDereference(a, a->ScriptPosition);
 						SAFE_RESOLVE(a, ctx);
@@ -8560,6 +8563,193 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			}
 		}
 	}
+	else if(Self->IsMap())
+	{
+		PMap * m = static_cast<PMap*>(Self->ValueType);
+		Self->ValueType = m->BackingType;
+
+		auto mapKeyType = m->KeyType;
+		auto mapValueType = m->ValueType;
+
+		bool isObjMap = mapValueType->isObjectPointer();
+		
+		if (PFunction **Override; (Override = m->FnOverrides.CheckKey(MethodName)))
+		{
+			afd_override = *Override;
+		}
+		
+		// Adapted from DynArray codegen
+		
+		int idx = 0;
+		for (auto &a : ArgList)
+		{
+			a = a->Resolve(ctx);
+			if (a == nullptr)
+			{
+				delete this;
+				return nullptr;
+			}
+			if (a->ValueType->isRealPointer())
+			{
+				auto pointedType = a->ValueType->toPointer()->PointedType;
+				if (pointedType && (pointedType->isDynArray() || pointedType->isMap() || pointedType->isMapIterator()))
+				{
+					a = new FxOutVarDereference(a, a->ScriptPosition);
+					SAFE_RESOLVE(a, ctx);
+				}
+			}
+			if (isObjMap && (MethodName == NAME_Insert && idx == 1))
+			{
+				// Null pointers are always valid.
+				if (!a->isConstant() || static_cast<FxConstant*>(a)->GetValue().GetPointer() != nullptr)
+				{
+					if (!a->ValueType->isObjectPointer() ||
+						!static_cast<PObjectPointer*>(mapValueType)->PointedClass()->IsAncestorOf(static_cast<PObjectPointer*>(a->ValueType)->PointedClass()))
+					{
+						ScriptPosition.Message(MSG_ERROR, "Type mismatch in function argument");
+						delete this;
+						return nullptr;
+					}
+				}
+			}
+
+			if (a->IsMap())
+			{
+				// Copy and Move must turn their parameter into a pointer to the backing struct type.
+				auto o = static_cast<PMap*>(a->ValueType);
+				auto backingtype = o->BackingType;
+				if (mapKeyType != o->KeyType || mapValueType != o->ValueType)
+				{
+					ScriptPosition.Message(MSG_ERROR, "Type mismatch in function argument");
+					delete this;
+					return nullptr;
+				}
+				bool writable;
+				if (!a->RequestAddress(ctx, &writable))
+				{
+					ScriptPosition.Message(MSG_ERROR, "Unable to dereference map variable");
+					delete this;
+					return nullptr;
+				}
+				a->ValueType = NewPointer(backingtype);
+
+				// Also change the field's type so the code generator can work with this (actually this requires swapping out the entire field.)
+				if (Self->ExprType == EFX_StructMember || Self->ExprType == EFX_ClassMember || Self->ExprType == EFX_StackVariable)
+				{
+					auto member = static_cast<FxMemberBase*>(Self);
+					auto newfield = Create<PField>(NAME_None, backingtype, 0, member->membervar->Offset);
+					member->membervar = newfield;
+				}
+			}
+			else if (a->IsPointer() && Self->ValueType->isPointer())
+			{
+				// the only case which must be checked up front is for pointer arrays receiving a new element.
+				// Since there is only one native backing class it uses a neutral void pointer as its argument,
+				// meaning that FxMemberFunctionCall is unable to do a proper check. So we have to do it here.
+				if (a->ValueType != mapValueType)
+				{
+					ScriptPosition.Message(MSG_ERROR, "Type mismatch in function argument. Got %s, expected %s", a->ValueType->DescriptiveName(), mapValueType->DescriptiveName());
+					delete this;
+					return nullptr;
+				}
+			}
+			idx++;
+			
+		}
+	}
+	else if(Self->IsMapIterator())
+	{
+		PMapIterator * mi = static_cast<PMapIterator*>(Self->ValueType);
+		Self->ValueType = mi->BackingType;
+
+		auto mapKeyType = mi->KeyType;
+		auto mapValueType = mi->ValueType;
+
+		bool isObjMap = mapValueType->isObjectPointer();
+
+		if (PFunction **Override; (Override = mi->FnOverrides.CheckKey(MethodName)))
+		{
+			afd_override = *Override;
+		}
+
+		// Adapted from DynArray codegen
+
+		int idx = 0;
+		for (auto &a : ArgList)
+		{
+			a = a->Resolve(ctx);
+			if (a == nullptr)
+			{
+				delete this;
+				return nullptr;
+			}
+			if (a->ValueType->isRealPointer())
+			{
+				auto pointedType = a->ValueType->toPointer()->PointedType;
+				if (pointedType && (pointedType->isDynArray() || pointedType->isMap() || pointedType->isMapIterator()))
+				{
+					a = new FxOutVarDereference(a, a->ScriptPosition);
+					SAFE_RESOLVE(a, ctx);
+				}
+			}
+			if (isObjMap && (MethodName == NAME_SetValue && idx == 0))
+			{
+				// Null pointers are always valid.
+				if (!a->isConstant() || static_cast<FxConstant*>(a)->GetValue().GetPointer() != nullptr)
+				{
+					if (!a->ValueType->isObjectPointer() ||
+						!static_cast<PObjectPointer*>(mapValueType)->PointedClass()->IsAncestorOf(static_cast<PObjectPointer*>(a->ValueType)->PointedClass()))
+					{
+						ScriptPosition.Message(MSG_ERROR, "Type mismatch in function argument");
+						delete this;
+						return nullptr;
+					}
+				}
+			}
+
+			if (a->IsMap())
+			{
+				// Copy and Move must turn their parameter into a pointer to the backing struct type.
+				auto o = static_cast<PMapIterator*>(a->ValueType);
+				auto backingtype = o->BackingType;
+				if (mapKeyType != o->KeyType || mapValueType != o->ValueType)
+				{
+					ScriptPosition.Message(MSG_ERROR, "Type mismatch in function argument");
+					delete this;
+					return nullptr;
+				}
+				bool writable;
+				if (!a->RequestAddress(ctx, &writable))
+				{
+					ScriptPosition.Message(MSG_ERROR, "Unable to dereference map variable");
+					delete this;
+					return nullptr;
+				}
+				a->ValueType = NewPointer(backingtype);
+
+				// Also change the field's type so the code generator can work with this (actually this requires swapping out the entire field.)
+				if (Self->ExprType == EFX_StructMember || Self->ExprType == EFX_ClassMember || Self->ExprType == EFX_StackVariable)
+				{
+					auto member = static_cast<FxMemberBase*>(Self);
+					auto newfield = Create<PField>(NAME_None, backingtype, 0, member->membervar->Offset);
+					member->membervar = newfield;
+				}
+			}
+			else if (a->IsPointer() && Self->ValueType->isPointer())
+			{
+				// the only case which must be checked up front is for pointer arrays receiving a new element.
+				// Since there is only one native backing class it uses a neutral void pointer as its argument,
+				// meaning that FxMemberFunctionCall is unable to do a proper check. So we have to do it here.
+				if (a->ValueType != mapValueType)
+				{
+					ScriptPosition.Message(MSG_ERROR, "Type mismatch in function argument. Got %s, expected %s", a->ValueType->DescriptiveName(), mapValueType->DescriptiveName());
+					delete this;
+					return nullptr;
+				}
+			}
+			idx++;
+		}
+	}
 
 
 	if (MethodName == NAME_GetParentClass &&
@@ -8634,7 +8824,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 
 isresolved:
 	bool error = false;
-	PFunction *afd = FindClassMemberFunction(cls, ctx.Class, MethodName, ScriptPosition, &error, ctx.Version, !ctx.FromDecorate);
+	PFunction *afd = afd_override ? afd_override : FindClassMemberFunction(cls, ctx.Class, MethodName, ScriptPosition, &error, ctx.Version, !ctx.FromDecorate);
 	if (error)
 	{
 		delete this;
@@ -9033,7 +9223,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 				if (ArgList[i] && ArgList[i]->ValueType->isRealPointer())
 				{
 					auto pointedType = ArgList[i]->ValueType->toPointer()->PointedType;
-					if (pointedType && pointedType->isDynArray())
+					if (pointedType && (pointedType->isDynArray() || pointedType->isMap() || pointedType->isMapIterator()))
 					{
 						ArgList[i] = new FxOutVarDereference(ArgList[i], ArgList[i]->ScriptPosition);
 						SAFE_RESOLVE(ArgList[i], ctx);
@@ -11805,7 +11995,7 @@ FxExpression *FxOutVarDereference::Resolve(FCompileContext &ctx)
 	SelfType = Self->ValueType->toPointer()->PointedType;
 	ValueType = SelfType;
 
-	if (SelfType->GetRegType() == REGT_NIL && !SelfType->isRealPointer() && !SelfType->isDynArray())
+	if (SelfType->GetRegType() == REGT_NIL && !SelfType->isRealPointer() && !SelfType->isDynArray() && !SelfType->isMap() && !SelfType->isMapIterator())
 	{
 		ScriptPosition.Message(MSG_ERROR, "Cannot dereference pointer");
 		delete this;
@@ -11834,7 +12024,7 @@ ExpEmit FxOutVarDereference::Emit(VMFunctionBuilder *build)
 		regType = REGT_POINTER;
 		loadOp = OP_LP;
 	}
-	else if (SelfType->isDynArray())
+	else if (SelfType->isDynArray() || SelfType->isMap() || SelfType->isMapIterator())
 	{
 		regType = REGT_POINTER;
 		loadOp = OP_MOVEA;

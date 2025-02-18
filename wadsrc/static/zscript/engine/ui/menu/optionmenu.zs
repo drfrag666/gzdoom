@@ -56,6 +56,9 @@ class OptionMenuDescriptor : MenuDescriptor native
 	native int mIndent;
 	native int mPosition;
 	native bool mDontDim;
+	native bool mDontBlur;
+	native bool mAnimatedTransition;
+	native bool mAnimated;
 	native Font mFont;
 
 	void Reset()
@@ -108,6 +111,9 @@ class OptionMenu : Menu
 		mParentMenu = parent;
 		mDesc = desc;
 		DontDim = desc.mDontDim;
+		DontBlur = desc.mDontBlur;
+		AnimatedTransition = desc.mAnimatedTransition;
+		Animated = desc.mAnimated;
 
 		let itemCount = mDesc.mItems.size();
 		if (itemCount > 0)

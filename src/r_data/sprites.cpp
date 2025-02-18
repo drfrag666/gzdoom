@@ -573,7 +573,7 @@ void R_InitSkins (void)
 	unsigned i;
 	int j, k, base;
 	int lastlump;
-	int aliasid;
+	FSoundID aliasid;
 	bool remove;
 	PClassActor *basetype, *transtype;
 
@@ -583,7 +583,7 @@ void R_InitSkins (void)
 
 	for (j = 0; j < NUMSKINSOUNDS; ++j)
 	{
-		playersoundrefs[j] = skinsoundnames[j][1];
+		playersoundrefs[j] = S_FindSound(skinsoundnames[j][1]);
 	}
 
 	while ((base = fileSystem.FindLump ("S_SKIN", &lastlump, true)) != -1)
@@ -733,8 +733,8 @@ void R_InitSkins (void)
 					}
 					else
 					{
-						int sndref = soundEngine->FindSoundNoHash (key);
-						if (sndref != 0)
+						auto sndref = soundEngine->FindSoundNoHash (key);
+						if (sndref.isvalid())
 						{
 							S_AddPlayerSound (Skins[i].Name, Skins[i].gender, sndref, lump, true);
 						}
@@ -886,7 +886,7 @@ void R_InitSkins (void)
 		}
 
 		// Register any sounds this skin provides
-		aliasid = 0;
+		aliasid = NO_SOUND;
 		for (j = 0; j < NUMSKINSOUNDS; j++)
 		{
 			if (sndlumps[j] != -1)

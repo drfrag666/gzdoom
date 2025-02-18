@@ -80,6 +80,7 @@ struct InterpolationViewer
 	{
 		DVector3 Pos;
 		DRotator Angles;
+		DRotator ViewAngles;
 	};
 
 	AActor *ViewActor;
@@ -419,12 +420,34 @@ void R_Shutdown ()
 
 //==========================================================================
 //
-// R_InterpolateView
+// P_NoInterpolation
 //
 //==========================================================================
 
 //CVAR (Int, tf, 0, 0)
 EXTERN_CVAR (Bool, cl_noprediction)
+
+bool P_NoInterpolation(player_t const *player, AActor const *actor)
+{
+	return player != NULL &&
+		!(player->cheats & CF_INTERPVIEW) &&
+		player - players == consoleplayer &&
+		actor == player->mo &&
+		!demoplayback &&
+		!(player->cheats & (CF_TOTALLYFROZEN | CF_FROZEN)) &&
+		player->playerstate == PST_LIVE &&
+		player->mo->reactiontime == 0 &&
+		!NoInterpolateView &&
+		!paused &&
+		(!netgame || !cl_noprediction) &&
+		!LocalKeyboardTurner;
+}
+
+//==========================================================================
+//
+// R_InterpolateView
+//
+//==========================================================================
 
 void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Frac, InterpolationViewer *iview)
 {
@@ -513,23 +536,12 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 		viewpoint.Pos = iview->New.Pos;
 		viewpoint.Path[0] = viewpoint.Path[1] = iview->New.Pos;
 	}
-	if (player != NULL &&
-		!(player->cheats & CF_INTERPVIEW) &&
-		player - players == consoleplayer &&
-		viewpoint.camera == player->mo &&
-		!demoplayback &&
+	if (P_NoInterpolation(player, viewpoint.camera) &&
 		iview->New.Pos.X == viewpoint.camera->X() &&
-		iview->New.Pos.Y == viewpoint.camera->Y() && 
-		!(player->cheats & (CF_TOTALLYFROZEN|CF_FROZEN)) &&
-		player->playerstate == PST_LIVE &&
-		player->mo->reactiontime == 0 &&
-		!NoInterpolateView &&
-		!paused &&
-		(!netgame || !cl_noprediction) &&
-		!LocalKeyboardTurner)
+		iview->New.Pos.Y == viewpoint.camera->Y())
 	{
-		viewpoint.Angles.Yaw = (nviewangle + DAngle::fromBam(LocalViewAngle & 0xFFFF0000)).Normalized180();
-		DAngle delta = player->centering ? nullAngle : DAngle::fromBam(int(LocalViewPitch & 0xFFFF0000));
+		viewpoint.Angles.Yaw = (nviewangle + DAngle::fromBam(LocalViewAngle)).Normalized180();
+		DAngle delta = player->centering ? nullAngle : DAngle::fromBam(LocalViewPitch);
 		viewpoint.Angles.Pitch = clamp<DAngle>((iview->New.Angles.Pitch - delta).Normalized180(), player->MinPitch, player->MaxPitch);
 		viewpoint.Angles.Roll = iview->New.Angles.Roll.Normalized180();
 	}
@@ -539,7 +551,13 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 		viewpoint.Angles.Yaw = (oviewangle + deltaangle(oviewangle, nviewangle) * Frac).Normalized180();
 		viewpoint.Angles.Roll = (iview->Old.Angles.Roll + deltaangle(iview->Old.Angles.Roll, iview->New.Angles.Roll) * Frac).Normalized180();
 	}
-	
+
+	// [MR] Apply the view angles as an offset if ABSVIEWANGLES isn't specified.
+	if (!(viewpoint.camera->flags8 & MF8_ABSVIEWANGLES))
+	{
+		viewpoint.Angles += (!player || (player->cheats & CF_INTERPVIEWANGLES)) ? interpolatedvalue(iview->Old.ViewAngles, iview->New.ViewAngles, Frac) : iview->New.ViewAngles;
+	}
+
 	// Due to interpolation this is not necessarily the same as the sector the camera is in.
 	viewpoint.sector = Level->PointInRenderSubsector(viewpoint.Pos)->sector;
 	bool moved = false;
@@ -746,6 +764,35 @@ static double QuakePower(double factor, double intensity, double offset)
 
 //==========================================================================
 //
+// R_DoActorTickerAngleChanges
+//
+//==========================================================================
+
+static void R_DoActorTickerAngleChanges(player_t* const player, AActor* const actor, const double scale)
+{
+	for (unsigned i = 0; i < 3; i++)
+	{
+		if (player->angleTargets[i].Sgn())
+		{
+			// Calculate scaled amount of target and add to the accumlation buffer.
+			DAngle addition = player->angleTargets[i] * scale;
+			player->angleAppliedAmounts[i] += addition;
+
+			// Test whether we're now reached/exceeded our target.
+			if (abs(player->angleAppliedAmounts[i]) >= abs(player->angleTargets[i]))
+			{
+				addition -= player->angleAppliedAmounts[i] - player->angleTargets[i];
+				player->angleTargets[i] = player->angleAppliedAmounts[i] = nullAngle;
+			}
+
+			// Apply the scaled addition to the angle.
+			actor->Angles[i] += addition;
+		}
+	}
+}
+
+//==========================================================================
+//
 // R_SetupFrame
 //
 //==========================================================================
@@ -779,6 +826,15 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	if (viewpoint.camera == NULL)
 	{
 		I_Error ("You lost your body. Bad dehacked work is likely to blame.");
+	}
+
+	// [MR] Get the input fraction, even if we don't need it this frame. Must run every frame.
+	const auto scaleAdjust = I_GetInputFrac(false);
+
+	// [MR] Process player angle changes if permitted to do so.
+	if (player && (player->cheats & CF_SCALEDNOLERP) && P_NoInterpolation(player, viewpoint.camera))
+	{
+		R_DoActorTickerAngleChanges(player, viewpoint.camera, scaleAdjust);
 	}
 
 	iview = FindPastViewer (viewpoint.camera);
@@ -898,16 +954,10 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		}
 	}
 
-	// [MC] Apply the view angles first, which is the offsets. If the absolute isn't desired,
-	// add the standard angles on top of it.
-	viewpoint.Angles = viewpoint.camera->ViewAngles;
+	// [MR] Apply view angles as the viewpoint angles if asked to do so.
+	iview->New.Angles = !(viewpoint.camera->flags8 & MF8_ABSVIEWANGLES) ? viewpoint.camera->Angles : viewpoint.camera->ViewAngles;
+	iview->New.ViewAngles = viewpoint.camera->ViewAngles;
 
-	if (!(viewpoint.camera->flags8 & MF8_ABSVIEWANGLES))
-	{
-		viewpoint.Angles += viewpoint.camera->Angles;
-	}
-
-	iview->New.Angles = viewpoint.Angles;
 	if (viewpoint.camera->player != 0)
 	{
 		player = viewpoint.camera->player;

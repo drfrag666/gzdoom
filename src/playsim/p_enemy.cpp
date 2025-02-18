@@ -1963,7 +1963,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 		if (self->reactiontime > self->Level->maptime)
 			self->target = nullptr;
 	}
-	else if (self->SeeSound)
+	else if (self->SeeSound.isvalid())
 	{
 		if ((self->flags2 & MF2_BOSS) || (self->flags8 & MF8_FULLVOLSEE))
 		{ // full volume
@@ -2145,7 +2145,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 		if (self->reactiontime > self->Level->maptime)
 			self->target = nullptr;
 	}
-	else if (self->SeeSound && !(flags & LOF_NOSEESOUND))
+	else if (self->SeeSound.isvalid() && !(flags & LOF_NOSEESOUND))
 	{
 		if (flags & LOF_FULLVOLSEESOUND)
 		{ // full volume
@@ -2574,7 +2574,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		// check for melee attack
 		if (meleestate && P_CheckMeleeRange(actor))
 		{
-			if (actor->AttackSound)
+			if (actor->AttackSound.isvalid())
 				S_Sound (actor, CHAN_WEAPON, 0, actor->AttackSound, 1, ATTN_NORM);
 
 			actor->SetState (meleestate);
@@ -2735,7 +2735,7 @@ bool P_CanResurrect(AActor *raiser, AActor *thing)
 //
 //==========================================================================
 
-bool P_CheckForResurrection(AActor* self, bool usevilestates, FState* state = nullptr, FSoundID sound = 0)
+bool P_CheckForResurrection(AActor* self, bool usevilestates, FState* state = nullptr, FSoundID sound = NO_SOUND)
 {
 	const AActor *info;
 	AActor *temp;
@@ -2836,7 +2836,7 @@ bool P_CheckForResurrection(AActor* self, bool usevilestates, FState* state = nu
 						self->SetState(archvile->FindState(NAME_Heal));
 					}
 				}
-				if (sound == 0) sound = "vile/raise";
+				if (sound == NO_SOUND) sound = S_FindSound("vile/raise");
 				S_Sound(corpsehit, CHAN_BODY, 0, sound, 1, ATTN_IDLE);
 				info = corpsehit->GetDefault();
 
@@ -3114,7 +3114,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Pain)
 	if (self->player && self->player->morphTics == 0)
 	{
 		const char *pain_amount;
-		FSoundID sfx_id = 0;
+		FSoundID sfx_id = NO_SOUND;
 
 		if (self->health < 25)
 			pain_amount = "*pain25";
@@ -3131,23 +3131,23 @@ DEFINE_ACTION_FUNCTION(AActor, A_Pain)
 			FString pain_sound = pain_amount;
 			pain_sound += '-';
 			pain_sound += self->player->LastDamageType.GetChars();
-			sfx_id = pain_sound;
-			if (sfx_id == 0)
+			sfx_id = S_FindSound(pain_sound);
+			if (sfx_id == NO_SOUND)
 			{
 				// Try again without a specific pain amount.
 				pain_sound = "*pain-";
 				pain_sound += self->player->LastDamageType.GetChars();
-				sfx_id = pain_sound;
+				sfx_id = S_FindSound(pain_sound);
 			}
 		}
-		if (sfx_id == 0)
+		if (sfx_id == NO_SOUND)
 		{
-			sfx_id = pain_amount;
+			sfx_id = S_FindSound(pain_amount);
 		}
 
 		S_Sound (self, CHAN_VOICE, 0, sfx_id, 1, ATTN_NORM);
 	}
-	else if (self->PainSound)
+	else if (self->PainSound.isvalid())
 	{
 		S_Sound (self, CHAN_VOICE, 0, self->PainSound, 1, ATTN_NORM);
 	}

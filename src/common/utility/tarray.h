@@ -316,7 +316,14 @@ public:
 	// Returns a reference to the last element
 	T &Last() const
 	{
+		assert(Count > 0);
 		return Array[Count-1];
+	}
+
+	T SafeGet (size_t index, const T& defaultval) const
+	{
+		if (index <= Count) return Array[index];
+		else return defaultval;
 	}
 
 	// returns address of first element
@@ -908,6 +915,9 @@ public:
 	typedef class TMapConstIterator<KT, VT, MyType> ConstIterator;
 	typedef struct { const KT Key; VT Value; } Pair;
 	typedef const Pair ConstPair;
+
+	typedef KT KeyType;
+	typedef VT ValueType;
 
 	TMap() { NumUsed = 0; SetNodeVector(1); }
 	TMap(hash_t size) { NumUsed = 0; SetNodeVector(size); }

@@ -4203,23 +4203,23 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_SeeSound:
-		actor->SeeSound = Level->Behaviors.LookupString(value);
+		actor->SeeSound = S_FindSound(Level->Behaviors.LookupString(value));
 		break;
 
 	case APROP_AttackSound:
-		actor->AttackSound = Level->Behaviors.LookupString(value);
+		actor->AttackSound = S_FindSound(Level->Behaviors.LookupString(value));
 		break;
 
 	case APROP_PainSound:
-		actor->PainSound = Level->Behaviors.LookupString(value);
+		actor->PainSound = S_FindSound(Level->Behaviors.LookupString(value));
 		break;
 
 	case APROP_DeathSound:
-		actor->DeathSound = Level->Behaviors.LookupString(value);
+		actor->DeathSound = S_FindSound(Level->Behaviors.LookupString(value));
 		break;
 
 	case APROP_ActiveSound:
-		actor->ActiveSound = Level->Behaviors.LookupString(value);
+		actor->ActiveSound = S_FindSound(Level->Behaviors.LookupString(value));
 		break;
 
 	case APROP_Species:
@@ -4676,7 +4676,7 @@ static FSoundID GetActorSound(AActor *actor, int soundtype)
 	case SOUND_CrushPain:	return actor->CrushPainSound;
 	case SOUND_Howl:		return actor->SoundVar(NAME_HowlSound);
 	case SOUND_Push:		return actor->SoundVar(NAME_PushSound);
-	default:				return 0;
+	default:				return NO_SOUND;
 	}
 }
 
@@ -5262,7 +5262,7 @@ int DLevelScript::SwapActorTeleFog(AActor *activator, int tid)
 			}
 			else if (argtype == TypeSound)
 			{
-				params.Push(int(FSoundID(Level->Behaviors.LookupString(args[i]))));
+				params.Push(S_FindSound(Level->Behaviors.LookupString(args[i])).index());
 			}
 			else
 			{
@@ -5295,7 +5295,7 @@ int DLevelScript::SwapActorTeleFog(AActor *activator, int tid)
 				}
 				else if (rettype == TypeSound)
 				{
-					retval = GlobalACSStrings.AddString(S_GetSoundName(FSoundID(retval)));
+					retval = GlobalACSStrings.AddString(S_GetSoundName(FSoundID::fromInt(retval)));
 				}
 			}
 			else if (rettype == TypeFloat64)
@@ -5626,7 +5626,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 		}
 
 		case ACSF_Radius_Quake2:
-			P_StartQuake(Level, activator, args[0], args[1], args[2], args[3], args[4], Level->Behaviors.LookupString(args[5]));
+			P_StartQuake(Level, activator, args[0], args[1], args[2], args[3], args[4], S_FindSound(Level->Behaviors.LookupString(args[5])));
 			break;
 
 		case ACSF_CheckActorClass:
@@ -5906,17 +5906,17 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 		case ACSF_PlayActorSound:
 			// PlaySound(tid, "SoundName", channel, volume, looping, attenuation, local)
 			{
-				FSoundID sid = 0;
+				FSoundID sid = NO_SOUND;
 
 				if (funcIndex == ACSF_PlaySound)
 				{
 					const char *lookup = Level->Behaviors.LookupString(args[1]);
 					if (lookup != NULL)
 					{
-						sid = lookup;
+						sid = S_FindSound(lookup);
 					}
 				}
-				if (sid != 0 || funcIndex == ACSF_PlayActorSound)
+				if (sid != NO_SOUND || funcIndex == ACSF_PlayActorSound)
 				{
 					auto it = Level->GetActorIterator(args[0]);
 					AActor *spot;
@@ -5938,7 +5938,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 						{
 							sid = GetActorSound(spot, args[1]);
 						}
-						if (sid != 0)
+						if (sid != NO_SOUND)
 						{
 							// What a mess. I think it's a given that this was used with sound flags so it will forever be restricted to the original 8 channels.
 							if (local) chan |= CHANF_LOCAL;
@@ -6199,7 +6199,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 
 		case ACSF_QuakeEx:
 		{
-			return P_StartQuakeXYZ(Level, activator, args[0], args[1], args[2], args[3], args[4], args[5], args[6], Level->Behaviors.LookupString(args[7]),
+			return P_StartQuakeXYZ(Level, activator, args[0], args[1], args[2], args[3], args[4], args[5], args[6], S_FindSound(Level->Behaviors.LookupString(args[7])),
 				argCount > 8 ? args[8] : 0,
 				argCount > 9 ? ACSToDouble(args[9]) : 1.0,
 				argCount > 10 ? ACSToDouble(args[10]) : 1.0,
@@ -6735,12 +6735,12 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				if (activator != nullptr && activator->player != nullptr)
 				{
 					int logNum = args[0];
-					FSoundID sid = 0;
+					FSoundID sid = NO_SOUND;
 
 					const char* lookup = Level->Behaviors.LookupString(args[1]);
 					if (lookup != nullptr)
 					{
-						sid = lookup;
+						sid = S_FindSound(lookup);
 					}
 
 					activator->player->SetSubtitle(logNum, sid);
@@ -8891,7 +8891,7 @@ scriptwait:
 					S_Sound (
 						activationline->frontsector,
 						CHAN_AUTO, 0,	// Not CHAN_AREA, because that'd probably break existing scripts.
-						lookup,
+						S_FindSound(lookup),
 						(float)(STACK(1)) / 127.f,
 						ATTN_NORM);
 				}

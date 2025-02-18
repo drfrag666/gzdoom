@@ -2122,12 +2122,12 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 
 	case CAST_S2So:
 		ASSERTD(a); ASSERTS(b);
-		reg.d[a] = FSoundID(reg.s[b]);
+		reg.d[a] = S_FindSound(reg.s[b]).index();
 		break;
 
 	case CAST_So2S:
 		ASSERTS(a); ASSERTD(b);
-		reg.s[a] = soundEngine->GetSoundName(reg.d[b]);
+		reg.s[a] = soundEngine->GetSoundName(FSoundID::fromInt(reg.d[b]));
 		break;
 
 	case CAST_SID2S:

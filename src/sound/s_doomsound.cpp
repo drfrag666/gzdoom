@@ -82,15 +82,15 @@ class DoomSoundEngine : public SoundEngine
 	void CalcPosVel(int type, const void* source, const float pt[3], int channum, int chanflags, FSoundID soundid, FVector3* pos, FVector3* vel, FSoundChan *) override;
 	bool ValidatePosVel(int sourcetype, const void* source, const FVector3& pos, const FVector3& vel);
 	TArray<uint8_t> ReadSound(int lumpnum);
-	int PickReplacement(int refid);
+	FSoundID PickReplacement(FSoundID refid);
 	FSoundID ResolveSound(const void *ent, int type, FSoundID soundid, float &attenuation) override;
 	void CacheSound(sfxinfo_t* sfx) override;
 	void StopChannel(FSoundChan* chan) override;
-	int AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid = -1, int nearlimit = 2) override
+	FSoundID AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid = -1, int nearlimit = 2) override
 	{
 		auto ndx = SoundEngine::AddSoundLump(logicalname, lump, CurrentPitchMask, resid, nearlimit);
-		S_sfx[ndx].UserData.Resize(1);
-		S_sfx[ndx].UserData[0] = 0;
+		S_sfx[ndx.index()].UserData.Resize(1);
+		S_sfx[ndx.index()].UserData[0] = 0;
 		return ndx;
 	}
 	bool CheckSoundLimit(sfxinfo_t* sfx, const FVector3& pos, int near_limit, float limit_range, int sourcetype, const void* actor, int channel, float attenuation) override
@@ -452,7 +452,7 @@ void DoomSoundEngine::CacheSound(sfxinfo_t* sfx)
 
 FSoundID DoomSoundEngine::ResolveSound(const void * ent, int type, FSoundID soundid, float &attenuation)
 {
-	auto sfx = &S_sfx[soundid];
+	auto sfx = &S_sfx[soundid.index()];
 	if (sfx->UserData[0] & SND_PlayerReserve)
 	{
 		AActor *src;
@@ -621,7 +621,7 @@ void S_PlaySound(AActor *a, int chan, EChanFlags flags, FSoundID sid, float vol,
 
 void A_StartSound(AActor *self, int soundid, int channel, int flags, double volume, double attenuation, double pitch, double startTime)
 {
-	S_PlaySoundPitch(self, channel, EChanFlags::FromInt(flags), soundid, (float)volume, (float)attenuation, (float)pitch, (float)startTime);
+	S_PlaySoundPitch(self, channel, EChanFlags::FromInt(flags), FSoundID::fromInt(soundid), (float)volume, (float)attenuation, (float)pitch, (float)startTime);
 }
 
 void A_PlaySound(AActor* self, int soundid, int channel, double volume, int looping, double attenuation, int local, double pitch)
@@ -728,17 +728,17 @@ void S_ChangeActorSoundPitch(AActor *actor, int channel, double pitch)
 // Is a sound being played by a specific emitter?
 //==========================================================================
 
-bool S_GetSoundPlayingInfo (const AActor *actor, int sound_id)
+bool S_GetSoundPlayingInfo (const AActor *actor, FSoundID sound_id)
 {
 	return soundEngine->GetSoundPlayingInfo(SOURCE_Actor, actor, sound_id);
 }
 
-bool S_GetSoundPlayingInfo (const sector_t *sec, int sound_id)
+bool S_GetSoundPlayingInfo (const sector_t *sec, FSoundID sound_id)
 {
 	return soundEngine->GetSoundPlayingInfo(SOURCE_Sector, sec, sound_id);
 }
 
-bool S_GetSoundPlayingInfo (const FPolyObj *poly, int sound_id)
+bool S_GetSoundPlayingInfo (const FPolyObj *poly, FSoundID sound_id)
 {
 	return soundEngine->GetSoundPlayingInfo(SOURCE_Polyobj, poly, sound_id);
 }
@@ -749,7 +749,7 @@ bool S_GetSoundPlayingInfo (const FPolyObj *poly, int sound_id)
 //
 //==========================================================================
 
-int S_IsActorPlayingSomething (AActor *actor, int channel, int sound_id)
+bool S_IsActorPlayingSomething (AActor *actor, int channel, FSoundID sound_id)
 {
 	if (compatflags & COMPATF_MAGICSILENCE)
 	{
@@ -1178,11 +1178,11 @@ TArray<uint8_t> DoomSoundEngine::ReadSound(int lumpnum)
 //==========================================================================
 static FRandom pr_randsound("RandSound");
 
-int DoomSoundEngine::PickReplacement(int refid)
+FSoundID DoomSoundEngine::PickReplacement(FSoundID refid)
 {
-	while (S_sfx[refid].bRandomHeader)
+	while (S_sfx[refid.index()].bRandomHeader)
 	{
-		const FRandomSoundList* list = &S_rnd[S_sfx[refid].link];
+		const FRandomSoundList* list = &S_rnd[S_sfx[refid.index()].link.index()];
 		refid = list->Choices[pr_randsound(list->Choices.Size())];
 	}
 	return refid;
@@ -1240,7 +1240,7 @@ void DoomSoundEngine::NoiseDebug()
 		color = (chan->ChanFlags & CHANF_LOOP) ? CR_BROWN : CR_GREY;
 
 		// Name
-		fileSystem.GetFileShortName(temp, S_sfx[chan->SoundID].lumpnum);
+		fileSystem.GetFileShortName(temp, S_sfx[chan->SoundID.index()].lumpnum);
 		temp[8] = 0;
 		DrawText(twod, font, color, 0, y, temp, TAG_DONE);
 
@@ -1335,21 +1335,20 @@ ADD_STAT(sounddebug)
 
 void DoomSoundEngine::PrintSoundList()
 {
-	auto &S_sfx = soundEngine->GetSounds();
 	char lumpname[9];
 	unsigned int i;
 
 	lumpname[8] = 0;
-	for (i = 0; i < S_sfx.Size(); i++)
+	for (i = 0; i < soundEngine->GetNumSounds(); i++)
 	{
-		const sfxinfo_t* sfx = &S_sfx[i];
+		const sfxinfo_t* sfx = soundEngine->GetSfx(FSoundID::fromInt(i));
 		if (sfx->bRandomHeader)
 		{
 			Printf("%3d. %s -> #%d {", i, sfx->name.GetChars(), sfx->link);
-			const FRandomSoundList* list = &S_rnd[sfx->link];
+			const FRandomSoundList* list = &S_rnd[sfx->link.index()];
 			for (auto& me : list->Choices)
 			{
-				Printf(" %s ", S_sfx[me].name.GetChars());
+				Printf(" %s ", S_sfx[me.index()].name.GetChars());
 			}
 			Printf("}\n");
 		}
@@ -1364,7 +1363,7 @@ void DoomSoundEngine::PrintSoundList()
 		}
 		else if (S_sfx[i].link != sfxinfo_t::NO_LINK)
 		{
-			Printf("%3d. %s -> %s\n", i, sfx->name.GetChars(), S_sfx[sfx->link].name.GetChars());
+			Printf("%3d. %s -> %s\n", i, sfx->name.GetChars(), S_sfx[sfx->link.index()].name.GetChars());
 		}
 		else
 		{
@@ -1389,8 +1388,8 @@ CCMD (playsound)
 {
 	if (argv.argc() > 1)
 	{
-		FSoundID id = argv[1];
-		if (id == 0)
+		FSoundID id = S_FindSound(argv[1]);
+		if (!id.isvalid())
 		{
 			Printf("'%s' is not a sound\n", argv[1]);
 		}
@@ -1411,8 +1410,8 @@ CCMD (loopsound)
 {
 	if (players[consoleplayer].mo != nullptr && !netgame && argv.argc() > 1)
 	{
-		FSoundID id = argv[1];
-		if (id == 0)
+		FSoundID id = S_FindSound(argv[1]);
+		if (!id.isvalid())
 		{
 			Printf("'%s' is not a sound\n", argv[1]);
 		}
