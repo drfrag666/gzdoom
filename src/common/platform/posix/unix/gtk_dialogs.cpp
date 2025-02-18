@@ -490,6 +490,7 @@ static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad,
 	ZUILabel videoSettings("Video settings");
 	ZUIRadioButton opengl("OpenGL");
 	ZUIRadioButton vulkan(&opengl, "Vulkan");
+	ZUIRadioButton softpoly(&opengl, "SoftPoly");
 	ZUIRadioButton openglES(&opengl, "OpenGL ES");
 	ZUICheckButton fullscreen("Full screen");
 
@@ -520,6 +521,7 @@ static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad,
 	vboxVideo.PackStart(&videoSettings, false, false, 0);
 	vboxVideo.PackStart(&opengl, false, false, 0);
 	vboxVideo.PackStart(&vulkan, false, false, 0);
+	vboxVideo.PackStart(&softpoly, false, false, 0);
 	vboxVideo.PackStart(&openglES, false, false, 0);
 	vboxVideo.PackStart(&fullscreen, false, false, 15);
 	vboxMisc.PackStart(&noautoload, false, false, 0);
@@ -538,7 +540,8 @@ static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad,
 	{
 	case 0: opengl.SetChecked(true); break;
 	case 1: vulkan.SetChecked(true); break;
-	case 2: openglES.SetChecked(true); break;
+	case 2: softpoly.SetChecked(true); break;
+	case 3: openglES.SetChecked(true); break;
 	default: break;
 	}
 
@@ -568,7 +571,8 @@ static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad,
 
 		if (opengl.GetChecked()) vid_preferbackend = 0;
 		if (vulkan.GetChecked()) vid_preferbackend = 1;
-		if (openglES.GetChecked()) vid_preferbackend = 2;
+		if (softpoly.GetChecked()) vid_preferbackend = 2;
+		if (openglES.GetChecked()) vid_preferbackend = 3;
 
 		vid_fullscreen = fullscreen.GetChecked();
 
