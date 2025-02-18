@@ -355,7 +355,7 @@ add_custom_target( revision_check ALL
 
 set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${CMAKE_DL_LIBS}" "${DRPC_LIBRARIES}")
 if (HAVE_VULKAN)
-	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "glslang" "SPIRV" "OGLCompiler")
+	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "zvulkan")
 endif()
 
 # ZMUSIC
@@ -743,7 +743,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	zcc-parse.c
 	zcc-parse.h
 	common/platform/win32/zutil.natvis
-	common/rendering/vulkan/thirdparty/vk_mem_alloc/vk_mem_alloc.natvis
 )
 
 set( VM_JIT_SOURCES
@@ -795,10 +794,7 @@ set( FASTMATH_SOURCES
 	
 #Vulkan stuff must go into a separate list because it needs to be disabled for some platforms
 set (VULKAN_SOURCES
-	common/rendering/vulkan/system/vk_device.cpp
-	common/rendering/vulkan/system/vk_swapchain.cpp
-	common/rendering/vulkan/system/vk_builders.cpp
-	common/rendering/vulkan/system/vk_framebuffer.cpp
+	common/rendering/vulkan/system/vk_renderdevice.cpp
 	common/rendering/vulkan/system/vk_commandbuffer.cpp
 	common/rendering/vulkan/system/vk_hwbuffer.cpp
 	common/rendering/vulkan/system/vk_buffer.cpp
@@ -817,8 +813,7 @@ set (VULKAN_SOURCES
 	common/rendering/vulkan/textures/vk_imagetransition.cpp
 	common/rendering/vulkan/textures/vk_renderbuffers.cpp
 	common/rendering/vulkan/textures/vk_texture.cpp
-	common/rendering/vulkan/thirdparty/volk/volk.c
-	common/rendering/vulkan/thirdparty/vk_mem_alloc/vk_mem_alloc.cpp
+	common/rendering/vulkan/textures/vk_framebuffer.cpp
 )
 
 if (HAVE_GLES2)
@@ -1342,7 +1337,6 @@ include_directories( .
 	common/rendering/gles
 	common/rendering/gles/glad/include
 	common/rendering/gles/Mali_OpenGL_ES_Emulator/include
-	common/rendering/vulkan/thirdparty
 	common/rendering/polyrenderer/backend
 	common/rendering/polyrenderer/drawers
 	common/scripting/vm
@@ -1373,8 +1367,7 @@ include_directories( .
 	scripting/zscript
 	rendering
 	../libraries/gdtoa
-	../libraries/glslang/glslang/Public
-	../libraries/glslang/spirv
+	../libraries/ZVulkan/include
 	${CMAKE_BINARY_DIR}/libraries/gdtoa
 	${SYSTEM_SOURCES_DIR}
 )
@@ -1554,9 +1547,6 @@ source_group("Common\\Rendering\\Vulkan Renderer\\System" REGULAR_EXPRESSION "^$
 source_group("Common\\Rendering\\Vulkan Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/renderer/.+")
 source_group("Common\\Rendering\\Vulkan Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/shaders/.+")
 source_group("Common\\Rendering\\Vulkan Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/textures/.+")
-source_group("Common\\Rendering\\Vulkan Renderer\\Third Party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/thirdparty/.+")
-source_group("Common\\Rendering\\Vulkan Renderer\\Third Party\\Volk" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/thirdparty/volk/.+")
-source_group("Common\\Rendering\\Vulkan Renderer\\Third Party\\Vk_Mem_Alloc" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/thirdparty/vk_mem_alloc.+")
 endif()
 source_group("Common\\Rendering\\Poly Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/polyrenderer/.+")
 source_group("Common\\Rendering\\Poly Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/polyrenderer/drawers/.+")
