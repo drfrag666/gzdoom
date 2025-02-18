@@ -299,7 +299,6 @@ CVAR(Bool, disableautoload, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALC
 CVAR(Bool, autoloadbrightmaps, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 CVAR(Bool, autoloadlights, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 CVAR(Bool, autoloadwidescreen, true, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
-CVAR(Bool, autoloadconpics, true, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 CVAR(Bool, r_debug_disable_vis_filter, false, 0)
 CVAR(Int, vid_showpalette, 0, 0)
 
@@ -1881,11 +1880,6 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 			sc.MustGetNumber();
 			GameStartupInfo.LoadWidescreen = !!sc.Number;
 		}
-		else if (!nextKey.CompareNoCase("LOADCONPICS"))
-		{
-			sc.MustGetNumber();
-			GameStartupInfo.LoadConpics = !!sc.Number;
-		}
 		else if (!nextKey.CompareNoCase("DISCORDAPPID"))
 		{
 			sc.MustGetString();
@@ -2006,12 +2000,6 @@ static void AddAutoloadFiles(const char *autoname, TArray<FString>& allwads)
 			const char *wswad = BaseFileSearch ("game_widescreen_gfx.pk3", NULL, true, GameConfig);
 			if (wswad)
 				D_AddFile (allwads, wswad, true, -1, GameConfig);
-		}
-		if (GameStartupInfo.LoadConpics == 1 || (GameStartupInfo.LoadConpics != 0 && autoloadconpics))
-		{
-			const char *conpicswad = BaseFileSearch ("game_conpics_gfx.pk3", NULL, false, GameConfig);
-			if (conpicswad)
-				D_AddFile (allwads, conpicswad, true, -1, GameConfig);
 		}
 	}
 
@@ -3786,7 +3774,7 @@ void D_Cleanup()
 	// delete GameStartupInfo data
 	GameStartupInfo.Name = "";
 	GameStartupInfo.BkColor = GameStartupInfo.FgColor = GameStartupInfo.Type = 0;
-	GameStartupInfo.LoadConpics = GameStartupInfo.LoadWidescreen = GameStartupInfo.LoadLights = GameStartupInfo.LoadBrightmaps = -1;
+	GameStartupInfo.LoadWidescreen = GameStartupInfo.LoadLights = GameStartupInfo.LoadBrightmaps = -1;
 	GameStartupInfo.DiscordAppId = "";
 	GameStartupInfo.SteamAppId = "";
 		

@@ -420,7 +420,6 @@ add_subdirectory( wadsrc_bm )
 add_subdirectory( wadsrc_lights )
 add_subdirectory( wadsrc_extra )
 add_subdirectory( wadsrc_widepix )
-add_subdirectory( wadsrc_conpics )
 add_subdirectory( src )
 
 if( NOT CMAKE_CROSSCOMPILING )
