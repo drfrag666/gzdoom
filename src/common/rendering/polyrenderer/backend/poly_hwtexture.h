@@ -9,7 +9,7 @@
 
 #include "tarray.h"
 #include "hw_ihwtexture.h"
-#include "volk/volk.h"
+#include <zvulkan/volk/volk.h>
 
 struct FMaterialState;
 class PolyBuffer;
