@@ -49,6 +49,7 @@
 #include "v_text.h"
 #include "vm.h"
 
+EXTERN_CVAR(Bool, netcompat)
 CVAR (Bool, sv_noautolevelcompat, false, CVAR_SERVERINFO | CVAR_LATCH | CVAR_DOWNSTREAM)
 
 //==========================================================================

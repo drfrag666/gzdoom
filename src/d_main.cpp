@@ -703,8 +703,6 @@ CVAR (Flag, compat_stayonlift,			compatflags2, COMPATF2_STAYONLIFT);
 CVAR (Flag, compat_nombf21,				compatflags2, COMPATF2_NOMBF21);
 CVAR (Flag, compat_oldrandom,			compatflags2, COMPATF2_OLD_RANDOM_GENERATOR);
 
-CVAR (Bool, sv_stricterdoommode, false, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_DOWNSTREAM)
-
 CVAR(Bool, vid_activeinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 EXTERN_CVAR(Bool, r_drawvoxels)

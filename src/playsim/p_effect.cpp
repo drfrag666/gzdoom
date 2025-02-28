@@ -449,7 +449,7 @@ void P_RunEffect (AActor *actor, int effects)
 	particle_t *particle;
 	int i;
 
-	if ((effects & FX_ROCKET) && (cl_rockettrails & 1) && !(compatmode == 2 && sv_stricterdoommode))
+	if ((effects & FX_ROCKET) && (cl_rockettrails & 1))
 	{
 		// Rocket trail
 		double backx = -actor->radius * 2 * moveangle.Cos();

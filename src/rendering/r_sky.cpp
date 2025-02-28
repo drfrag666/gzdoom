@@ -111,8 +111,7 @@ void InitSkyMap(FLevelLocals *Level)
 	Level->skystretch = (r_skymode == 1
 		&& skyheight >= 128 && skyheight <= 256
 		&& Level->IsFreelookAllowed()
-		&& !(Level->flags & LEVEL_FORCETILEDSKY)
-		&& !(compatmode == 2 && sv_stricterdoommode)) ? 1 : 0;
+		&& !(Level->flags & LEVEL_FORCETILEDSKY)) ? 1 : 0;
 }
 
 void R_InitSkyMap()

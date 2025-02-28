@@ -36,9 +36,6 @@
 #include "renderstyle.h"
 #include "c_cvars.h"
 
-EXTERN_CVAR(Int, compatmode)
-EXTERN_CVAR(Bool, sv_stricterdoommode)
-
 CVAR (Bool, r_drawtrans, true, 0)
 CVAR (Int, r_drawfuzz, 1, CVAR_ARCHIVE)
 
@@ -127,7 +124,7 @@ void FRenderStyle::CheckFuzz()
 		return;
 
 	case STYLEOP_FuzzOrAdd:
-		if (r_drawtrans && r_drawfuzz == 0 && !(compatmode == 2 && sv_stricterdoommode))
+		if (r_drawtrans && r_drawfuzz == 0)
 		{
 			BlendOp = STYLEOP_Add;
 			return;
@@ -135,7 +132,7 @@ void FRenderStyle::CheckFuzz()
 		break;
 
 	case STYLEOP_FuzzOrSub:
-		if (r_drawtrans && r_drawfuzz == 0 && !(compatmode == 2 && sv_stricterdoommode))
+		if (r_drawtrans && r_drawfuzz == 0)
 		{
 			BlendOp = STYLEOP_Sub;
 			return;
@@ -143,7 +140,7 @@ void FRenderStyle::CheckFuzz()
 		break;
 
 	case STYLEOP_FuzzOrRevSub:
-		if (r_drawtrans && r_drawfuzz == 0 && !(compatmode == 2 && sv_stricterdoommode))
+		if (r_drawtrans && r_drawfuzz == 0)
 		{
 			BlendOp = STYLEOP_RevSub;
 			return;
@@ -159,7 +156,4 @@ void FRenderStyle::CheckFuzz()
 	{
 		BlendOp = STYLEOP_Fuzz;
 	}
-	
-	if (compatmode == 2 && sv_stricterdoommode)
-		BlendOp = STYLEOP_Fuzz;
 }

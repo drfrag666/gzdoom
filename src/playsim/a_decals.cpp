@@ -710,7 +710,7 @@ void DImpactDecal::Expired()
 
 DBaseDecal* DImpactDecal::StaticCreate (FLevelLocals *Level, const char *name, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color, uint32_t bloodTranslation)
 {
-	if (cl_maxdecals > 0 && !(compatmode == 2 && sv_stricterdoommode))
+	if (cl_maxdecals > 0)
 	{
 		const FDecalTemplate *tpl = DecalLibrary.GetDecalByName (name);
 
@@ -731,7 +731,7 @@ DBaseDecal* DImpactDecal::StaticCreate (FLevelLocals *Level, const char *name, c
 DBaseDecal* DImpactDecal::StaticCreate (FLevelLocals *Level, const FDecalTemplate *tpl, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color, uint32_t bloodTranslation, bool permanent)
 {
 	DBaseDecal *decal = NULL;
-	if (tpl != NULL && ((cl_maxdecals > 0 && !(wall->Flags & WALLF_NOAUTODECALS)) || permanent) && !(compatmode == 2 && sv_stricterdoommode))
+	if (tpl != NULL && ((cl_maxdecals > 0 && !(wall->Flags & WALLF_NOAUTODECALS)) || permanent))
 	{
 		if (tpl->LowerDecal)
 		{

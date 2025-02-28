@@ -6376,12 +6376,11 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 						mo->target = thing;
 					}
 
-					if (!(cl_bloodtype <= 1) && !(compatmode == 2 && sv_stricterdoommode))
-						mo->renderflags |= RF_INVISIBLE;
+					if (!(cl_bloodtype <= 1)) mo->renderflags |= RF_INVISIBLE;
 				}
 
 				DAngle an = DAngle::fromDeg((M_Random() - 128) * (360./256));
-				if (cl_bloodtype >= 1 && !(compatmode == 2 && sv_stricterdoommode))
+				if (cl_bloodtype >= 1)
 				{
 					P_DrawSplash2(thing->Level, 32,  thing->PosPlusZ(thing->Height/2), an, 2, thing->BloodColor);
 				}
