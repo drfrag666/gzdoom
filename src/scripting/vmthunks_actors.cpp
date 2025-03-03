@@ -1749,6 +1749,27 @@ DEFINE_ACTION_FUNCTION_NATIVE(AInventory, PrintPickupMessage, PrintPickupMessage
 //
 //=====================================================================================
 
+DEFINE_ACTION_FUNCTION_NATIVE(AKey, IsLockDefined, P_IsLockDefined)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(locknum);
+	ACTION_RETURN_BOOL(P_IsLockDefined(locknum));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AKey, GetMapColorForLock, P_GetMapColorForLock)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(locknum);
+	ACTION_RETURN_INT(P_GetMapColorForLock(locknum));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AKey, GetMapColorForKey, P_GetMapColorForKey)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(key, AActor);
+	ACTION_RETURN_INT(P_GetMapColorForKey(key));
+}
+
 DEFINE_ACTION_FUNCTION_NATIVE(AKey, GetKeyTypeCount, P_GetKeyTypeCount)
 {
 	PARAM_PROLOGUE;
@@ -1793,6 +1814,51 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckFor3DCeilingHit, CheckFor3DCeilingHit
 	ACTION_RETURN_BOOL(P_CheckFor3DCeilingHit(self, z, trigger));
 }
 
+//=====================================================================================
+//
+// Bounce exports
+//
+//=====================================================================================
+DEFINE_ACTION_FUNCTION(AActor, BounceActor)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(blocking, AActor);
+	PARAM_BOOL(onTop);
+
+	ACTION_RETURN_BOOL(P_BounceActor(self, blocking, onTop));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, BounceWall)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(l, line_t);
+
+	auto cur = self->BlockingLine;
+	if (l)
+		self->BlockingLine = l;
+
+	bool res = P_BounceWall(self);
+	self->BlockingLine = cur;
+
+	ACTION_RETURN_BOOL(res);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, BouncePlane)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(plane, secplane_t);
+
+	ACTION_RETURN_BOOL(self->FloorBounceMissile(*plane));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, PlayBounceSound)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL(onFloor);
+
+	self->PlayBounceSound(onFloor);
+	return 0;
+}
 
 
 static int isFrozen(AActor *self)

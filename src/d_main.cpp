@@ -573,6 +573,18 @@ CVAR (Flag, sv_noextraammo,			dmflags2, DF2_NO_EXTRA_AMMO);
 
 //==========================================================================
 //
+// CVAR dmflags3
+//
+//==========================================================================
+
+CUSTOM_CVAR(Int, dmflags3, 0, CVAR_SERVERINFO | CVAR_NOINITCALL)
+{
+}
+
+CVAR(Flag, sv_noplayerclip, dmflags3, DF3_NO_PLAYER_CLIP);
+
+//==========================================================================
+//
 // CVAR compatflags
 //
 //==========================================================================
@@ -1243,7 +1255,7 @@ void D_DoomLoop ()
 		catch (CVMAbortException &error)
 		{
 			error.MaybePrintMessage();
-			Printf(PRINT_NONOTIFY, "%s", error.stacktrace.GetChars());
+			Printf(PRINT_NONOTIFY | PRINT_BOLD, "%s", error.stacktrace.GetChars());
 			D_ErrorCleanup();
 		}
 	}

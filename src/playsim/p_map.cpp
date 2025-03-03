@@ -112,6 +112,20 @@ static FRandom pr_crunch("DoCrunch");
 TArray<spechit_t> spechit;
 TArray<spechit_t> portalhit;
 
+//==========================================================================
+//
+// P_ShouldPassThroughPlayer
+// Allows players to walk through and shoot through each other (useful in
+// multiplayer)
+//
+//==========================================================================
+
+bool P_ShouldPassThroughPlayer(AActor *self, AActor *other)
+{
+  return (dmflags3 & DF3_NO_PLAYER_CLIP) &&
+          other->player && other->player->mo == other &&
+          self->IsFriend(other);
+}
 
 //==========================================================================
 //
@@ -513,6 +527,9 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 		if ((thing->IsKindOf(NAME_Inventory) || (thing->flags2 & MF2_TELESTOMP)) && !(thing->flags & MF_SOLID) && ((th->flags3 & MF3_ISMONSTER) || th->player != nullptr))
 			continue;
 
+		if (tmf.thing->player && P_ShouldPassThroughPlayer(tmf.thing, th))
+			continue;
+
 		// monsters don't stomp things except on boss level
 		// [RH] Some Heretic/Hexen monsters can telestomp
 		// ... and some items can never be telefragged while others will be telefragged by everything that teleports upon them.
@@ -523,6 +540,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 				P_DamageMobj(th, thing, thing, TELEFRAG_DAMAGE, NAME_Telefrag, DMG_THRUSTLESS);
 			continue;
 		}
+
 		return false;
 	}
 
@@ -1372,6 +1390,9 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	if ((tm.thing->flags6 & MF6_THRUSPECIES) && (tm.thing->GetSpecies() == thing->GetSpecies()))
 		return true;
 
+	if (tm.thing->player && P_ShouldPassThroughPlayer(tm.thing, thing))
+		return true;
+
 	tm.thing->BlockingMobj = thing;
 	topz = thing->Top();
 
@@ -1555,6 +1576,12 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 
 		// Check for rippers passing through corpses
 		if ((thing->flags & MF_CORPSE) && (tm.thing->flags2 & MF2_RIP) && !(thing->flags & MF_SHOOTABLE))
+		{
+			return true;
+		}
+
+		if (tm.thing->target && tm.thing->target != thing &&
+			tm.thing->target->player && P_ShouldPassThroughPlayer(tm.thing->target, thing))
 		{
 			return true;
 		}
@@ -2110,7 +2137,10 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 		{ // If they cannot collide, they cannot block each other.
 			continue;
 		}
-
+		if (actor->player && P_ShouldPassThroughPlayer(actor, thing))
+		{
+			continue;
+		}
 
 		onmobj = thing;
 		if (quick) break;
@@ -4177,6 +4207,9 @@ struct aim_t
 			if (aimtarget != NULL && th != aimtarget)
 				continue;					// only care about target, and you're not it
 
+			if (shootthing->player && P_ShouldPassThroughPlayer(shootthing, th))
+				continue;
+
 			// If we want to start a conversation anything that has one should be
 			// found, regardless of other settings.
 			if (!(flags & ALF_CHECKCONVERSATION) || th->Conversation == NULL)
@@ -4462,18 +4495,19 @@ static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
 	// 3. MTHRUSPECIES on puff and the shooter has same species as the hit actor
 	// 4. THRUSPECIES on puff and the puff has same species as the hit actor
 	// 5. THRUGHOST on puff and the GHOST flag on the hit actor
+	// 6. Matching ThruBits
+	// 7. A player caller with no player clip enabled
 
 	if ((data->ThruActors) || 
 		(!(data->Spectral) && res.Actor->flags4 & MF4_SPECTRAL) ||
 		(data->MThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies()) ||
 		(data->ThruSpecies && res.Actor->GetSpecies() == data->PuffSpecies) ||
-		(data->hitGhosts && res.Actor->flags3 & MF3_GHOST))
+		(data->hitGhosts && res.Actor->flags3 & MF3_GHOST) ||
+		(data->UseThruBits && (data->ThruBits & res.Actor->ThruBits)) ||
+		(data->Caller->player && P_ShouldPassThroughPlayer(data->Caller, res.Actor)))
 	{
 		return TRACE_Skip;
 	}
-
-	if (data->UseThruBits && (data->ThruBits & res.Actor->ThruBits))
-		return TRACE_Skip;
 
 	return TRACE_Stop;
 }
@@ -5201,12 +5235,14 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 	// 2. MTHRUSPECIES on puff and the shooter has same species as the hit actor
 	// 3. THRUSPECIES on puff and the puff has same species as the hit actor
 	// 4. THRUGHOST on puff and the GHOST flag on the hit actor
+	// 5. Skip through players in coop if sv_noplayerclip is enabled
 
 	if ((data->ThruActors) ||
 		(data->UseThruBits && (data->ThruBits & res.Actor->ThruBits)) ||
 		(data->MThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies()) ||
 		(data->ThruSpecies && res.Actor->GetSpecies() == data->PuffSpecies) ||
-		(data->ThruGhosts && res.Actor->flags3 & MF3_GHOST))
+		(data->ThruGhosts && res.Actor->flags3 & MF3_GHOST) ||
+		(data->Caller->player && P_ShouldPassThroughPlayer(data->Caller, res.Actor)))
 	{
 		return TRACE_Skip;
 	}
@@ -6020,6 +6056,7 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 		if (thing->flags3 & MF3_NORADIUSDMG && !(bombspot->flags4 & MF4_FORCERADIUSDMG))
 			continue;
 
+		// allow rocket splash damage
 		if (!(flags & RADF_HURTSOURCE) && (thing == bombsource || thing == bombspot))
 		{ // don't damage the source of the explosion
 			continue;
@@ -6045,6 +6082,9 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 		{
 			continue;
 		}
+
+		if (bombsource && thing != bombsource && bombsource->player && P_ShouldPassThroughPlayer(bombsource, thing))
+			continue;
 
 		targets.Push(thing);
 	}
@@ -6433,6 +6473,9 @@ int P_PushUp(AActor *thing, FChangePosition *cpos)
 		if (!P_CanCollideWith(thing, intersect))
 			continue;
 
+		if (thing->player && P_ShouldPassThroughPlayer(thing, intersect))
+			continue;
+
 		if (!(intersect->flags2 & MF2_PASSMOBJ) ||
 			(!(intersect->flags3 & MF3_ISMONSTER) && intersect->Mass > mymass) ||
 			(intersect->flags4 & MF4_ACTLIKEBRIDGE)
@@ -6495,6 +6538,9 @@ int P_PushDown(AActor *thing, FChangePosition *cpos)
 		if ((thing->flags & MF_MISSILE) && (intersect->flags2 & MF2_REFLECTIVE) && (intersect->flags7 & MF7_THRUREFLECT))
 			continue;
 		if (!P_CanCollideWith(thing, intersect))
+			continue;
+
+		if (thing->player && P_ShouldPassThroughPlayer(thing, intersect))
 			continue;
 
 		if (!(intersect->flags2 & MF2_PASSMOBJ) ||

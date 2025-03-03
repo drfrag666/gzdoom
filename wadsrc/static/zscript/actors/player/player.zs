@@ -46,7 +46,9 @@ class PlayerPawn : Actor
 	double		AirCapacity;			// Multiplier for air supply underwater.
 	Class<Inventory> FlechetteType;
 	color 		DamageFade;				// [CW] Fades for when you are being damaged.
+	double		FlyBob;					// [B] Fly bobbing mulitplier
 	double		ViewBob;				// [SP] ViewBob Multiplier
+	double		WaterClimbSpeed;		// [B] Speed when climbing up walls in water
 	double		FullHeight;
 	double		curBob;
 	double		prevBob;
@@ -75,7 +77,9 @@ class PlayerPawn : Actor
 	property FlechetteType: FlechetteType;
 	property Portrait: Portrait;
 	property TeleportFreezeTime: TeleportFreezeTime;
+	property FlyBob: FlyBob;
 	property ViewBob: ViewBob;
+	property WaterClimbSpeed : WaterClimbSpeed;
 	
 	flagdef NoThrustWhenInvul: PlayerFlags, 0;
 	flagdef CanSuperMorph: PlayerFlags, 1;
@@ -117,7 +121,9 @@ class PlayerPawn : Actor
 		Player.MugShotMaxHealth 0;
 		Player.FlechetteType "ArtiPoisonBag3";
 		Player.AirCapacity 1;
+		Player.FlyBob 1;
 		Player.ViewBob 1;
+		Player.WaterClimbSpeed 3.5;
 		Player.TeleportFreezeTime 18;
 		Obituary "$OB_MPDEFAULT";
 	}
@@ -560,7 +566,7 @@ class PlayerPawn : Actor
 		}
 		else if (bNoGravity && !player.onground)
 		{
-			player.bob = 0.5;
+			player.bob = min(abs(0.5 * FlyBob), MAXBOB);
 		}
 		else
 		{
