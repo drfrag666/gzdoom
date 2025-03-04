@@ -892,7 +892,7 @@ void FMultiBlockLinesIterator::Reset()
 //===========================================================================
 
 FBlockThingsIterator::FBlockThingsIterator(FLevelLocals *l)
-: DynHash(0)
+: DynHash()
 {
 	Level = l;
 	minx = maxx = 0;
@@ -902,7 +902,7 @@ FBlockThingsIterator::FBlockThingsIterator(FLevelLocals *l)
 }
 
 FBlockThingsIterator::FBlockThingsIterator(FLevelLocals *l, int _minx, int _miny, int _maxx, int _maxy)
-: DynHash(0)
+: DynHash()
 {
 	Level = l;
 	minx = _minx;

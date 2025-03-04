@@ -4,7 +4,7 @@
 
 ## LZDoom is a classic style GZDoom fork with lower system requirements
 
-Copyright (c) 1998-2022 ZDoom + GZDoom teams, and contributors
+Copyright (c) 1998-2023 ZDoom + GZDoom teams, and contributors
 
 Doom Source (c) 1997 id Software, Raven Software, and contributors
 

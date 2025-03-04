@@ -172,6 +172,9 @@ namespace swrenderer
 
 		WallTMapScale2 = IYaspectMul / CenterX * 1.2 / ypixelstretch;
 
+		// [RicardoLuis0] adjust IYaspectMul for map stretch -- fixes slope rendering on maps that define pixelratio
+		IYaspectMul *= 1.2 / ypixelstretch;
+
 		// thing clipping
 		fillshort(screenheightarray, viewwidth, (short)viewheight);
 
@@ -251,7 +254,7 @@ namespace swrenderer
 		double translatedY = worldPos.Y - viewpoint.Pos.Y;
 		return {
 			translatedX * viewpoint.Sin - translatedY * viewpoint.Cos,
-			translatedX * viewpoint.TanCos + translatedY * viewpoint.TanSin
+			translatedX * viewpoint.Cos + translatedY * viewpoint.Sin
 		};
 	}
 
@@ -263,7 +266,7 @@ namespace swrenderer
 		return {
 			translatedX * viewpoint.Sin - translatedY * viewpoint.Cos,
 			translatedZ,
-			translatedX * viewpoint.TanCos + translatedY * viewpoint.TanSin
+			translatedX * viewpoint.Cos + translatedY * viewpoint.Sin
 		};
 	}
 
