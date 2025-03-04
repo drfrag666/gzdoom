@@ -549,6 +549,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	if (primaryLevel->info != nullptr)
 		staticEventManager.WorldUnloaded(FString());	// [MK] don't pass the new map, as it's not a level transition
 
+	UnlatchCVars ();
 	if (!savegamerestore)
 	{
 		G_ClearHubInfo();
@@ -558,9 +559,14 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		// [RH] Mark all levels as not visited
 		for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 			wadlevelinfos[i].flags = wadlevelinfos[i].flags & ~LEVEL_VISITED;
+
+		auto redirectmap = FindLevelInfo(mapname);
+		if (redirectmap->RedirectCVAR != NAME_None)
+			redirectmap = redirectmap->CheckLevelRedirect();
+		if (redirectmap && redirectmap->MapName.GetChars()[0])
+				mapname = redirectmap->MapName;
 	}
 
-	UnlatchCVars ();
 	G_VerifySkill();
 	UnlatchCVars ();
 	globalfreeze = globalchangefreeze = 0;
