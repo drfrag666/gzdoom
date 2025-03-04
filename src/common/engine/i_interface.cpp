@@ -57,7 +57,7 @@ CUSTOM_CVAR(Bool, ui_classic, true, CVAR_ARCHIVE | CVAR_NOINITCALL)
 CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 {
 	FString str = *self;
-	bool invalid = ui_classic && (!str.Compare("cs")  || !str.Compare("de") || !str.Compare("eo") || !str.Compare("fi") || !str.Compare("jp")
+	bool invalid = ui_classic && (!str.Compare("cs") || !str.Compare("da") || !str.Compare("de") || !str.Compare("eo") || !str.Compare("fi") || !str.Compare("jp")
 		|| !str.Compare("ko") || !str.Compare("nl") || !str.Compare("pl") || !str.Compare("ro") || !str.Compare("ru"));
 	if (invalid && str.Compare("auto")) self = "auto";
 	if (ui_classic && !str.Compare("sr")) self = "pt";

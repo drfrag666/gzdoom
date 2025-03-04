@@ -708,6 +708,10 @@ void InitThingdef()
 	sectorportalstruct->Size = sizeof(FSectorPortal);
 	sectorportalstruct->Align = alignof(FSectorPortal);
 
+	auto lineportalstruct = NewStruct("LinePortal", nullptr, true);
+	lineportalstruct->Size = sizeof(FLinePortal);
+	lineportalstruct->Align = alignof(FLinePortal);
+
 	auto playerclassstruct = NewStruct("PlayerClass", nullptr, true);
 	playerclassstruct->Size = sizeof(FPlayerClass);
 	playerclassstruct->Align = alignof(FPlayerClass);
@@ -719,6 +723,10 @@ void InitThingdef()
 	auto teamstruct = NewStruct("Team", nullptr, true);
 	teamstruct->Size = sizeof(FTeam);
 	teamstruct->Align = alignof(FTeam);
+
+	auto terraindefstruct = NewStruct("TerrainDef", nullptr, true);
+	terraindefstruct->Size = sizeof(FTerrainDef);
+	terraindefstruct->Align = alignof(FTerrainDef);
 
 	PStruct *pstruct = NewStruct("PlayerInfo", nullptr, true);
 	pstruct->Size = sizeof(player_t);

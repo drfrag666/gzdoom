@@ -252,6 +252,7 @@ void PClass::StaticShutdown ()
 	// Make a full garbage collection here so that all destroyed but uncollected higher level objects 
 	// that still exist are properly taken down before the low level data is deleted.
 	GC::FullGC();
+	GC::FullGC();
 
 
 	Namespaces.ReleaseSymbols();
@@ -530,7 +531,7 @@ void PClass::Derive(PClass *newclass, FName name)
 //
 //==========================================================================
 
-PClass *PClass::CreateDerivedClass(FName name, unsigned int size, bool *newlycreated)
+PClass *PClass::CreateDerivedClass(FName name, unsigned int size, bool *newlycreated, int fileno)
 {
 	assert(size >= Size);
 	PClass *type;
@@ -570,7 +571,7 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size, bool *newlycre
 	type->Size = size;
 	if (size != TentativeClass)
 	{
-		NewClassType(type);
+		NewClassType(type, fileno);
 		if (newlycreated) *newlycreated = true;
 		type->Virtuals = Virtuals;
 	}
@@ -590,13 +591,13 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size, bool *newlycre
 //
 //==========================================================================
 
-PField *PClass::AddField(FName name, PType *type, uint32_t flags)
+PField *PClass::AddField(FName name, PType *type, uint32_t flags, int fileno)
 {
 	PField *field;
 	if (!(flags & VARF_Meta))
 	{
 		unsigned oldsize = Size;
-		field = VMType->Symbols.AddField(name, type, flags, Size);
+		field = VMType->Symbols.AddField(name, type, flags, Size, nullptr, fileno);
 
 		// Only initialize the defaults if they have already been created.
 		// For ZScript this is not the case, it will first define all fields before
@@ -611,7 +612,7 @@ PField *PClass::AddField(FName name, PType *type, uint32_t flags)
 	{
 		// Same as above, but a different data storage.
 		unsigned oldsize = MetaSize;
-		field = VMType->Symbols.AddField(name, type, flags, MetaSize);
+		field = VMType->Symbols.AddField(name, type, flags, MetaSize, nullptr, fileno);
 
 		if (field != nullptr && !(flags & VARF_Native) && Meta != nullptr)
 		{
