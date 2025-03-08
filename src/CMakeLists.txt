@@ -112,7 +112,7 @@ else()
 				if( NOT DYN_GTK )
 					set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} ${GTK3_LIBRARIES} )
 				endif()
-				include_directories( ${GTK3_INCLUDE_DIRS} )
+				include_directories( SYSTEM ${GTK3_INCLUDE_DIRS} )
 				link_directories( ${GTK3_LIBRARY_DIRS} )
 			else()
 				pkg_check_modules( GTK2 gtk+-2.0 )
@@ -120,7 +120,7 @@ else()
 					if( NOT DYN_GTK )
 						set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} ${GTK2_LIBRARIES} )
 					endif()
-					include_directories( ${GTK2_INCLUDE_DIRS} )
+					include_directories( SYSTEM ${GTK2_INCLUDE_DIRS} )
 					link_directories( ${GTK2_LIBRARY_DIRS} )
 				else()
 					set( NO_GTK ON )
@@ -147,7 +147,7 @@ else()
 	# Non-Windows version also needs SDL except native OS X backend
 	if( NOT APPLE OR NOT OSX_COCOA_BACKEND )
 		find_package( SDL2 REQUIRED )
-		include_directories( "${SDL2_INCLUDE_DIR}" )
+		include_directories( SYSTEM "${SDL2_INCLUDE_DIR}" )
 		set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${SDL2_LIBRARY}" )
 	endif()
 
@@ -158,7 +158,7 @@ if( NOT NO_OPENAL )
 		find_package( OpenAL )
 		mark_as_advanced(CLEAR OPENAL_INCLUDE_DIR)
 		if( OPENAL_INCLUDE_DIR )
-			include_directories( ${OPENAL_INCLUDE_DIR} )
+			include_directories( SYSTEM ${OPENAL_INCLUDE_DIR} )
 			mark_as_advanced(CLEAR OPENAL_LIBRARY)
 			if( OPENAL_LIBRARY )
 				set( PROJECT_LIBRARIES ${OPENAL_LIBRARY} ${PROJECT_LIBRARIES} )
@@ -414,17 +414,17 @@ endif()
 
 if( VPX_FOUND )
 	add_definitions( "-DUSE_LIBVPX=1" )
-	include_directories( "${VPX_INCLUDE_DIR}" )
+	include_directories( SYSTEM "${VPX_INCLUDE_DIR}" )
 	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} ${VPX_LIBRARIES} )
 else()
 	message( SEND_ERROR "Could not find libvpx" )
 endif()
 
-include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${ZMUSIC_INCLUDE_DIR}" "${DRPC_INCLUDE_DIR}")
+include_directories( SYSTEM "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${ZMUSIC_INCLUDE_DIR}" "${DRPC_INCLUDE_DIR}")
 
 if( ${HAVE_VM_JIT} )
 	add_definitions( -DHAVE_VM_JIT )
-	include_directories( "${ASMJIT_INCLUDE_DIR}" )
+	include_directories( SYSTEM "${ASMJIT_INCLUDE_DIR}" )
 	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${ASMJIT_LIBRARIES}")
 endif()
 
@@ -1315,7 +1315,9 @@ endif()
 
 target_link_libraries( zdoom ${PROJECT_LIBRARIES} gdtoa lzma ${ZMUSIC_LIBRARIES} )
 
-include_directories( .
+include_directories(
+	BEFORE
+	.
 	common/audio/sound
 	common/audio/music
 	common/2d

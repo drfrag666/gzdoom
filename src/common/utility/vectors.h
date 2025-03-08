@@ -55,7 +55,7 @@ namespace pi
 	inline constexpr float pif() { return 3.14159265358979323846f; }
 }
 
-// optionally use reliable math routines if reproducability across hardware is important., but let this still compile without them.
+// optionally use reliable math routines if reproducability across hardware is important, but let this still compile without them.
 #if __has_include("math/cmath.h")
 #include "math/cmath.h"
 #else
@@ -96,6 +96,11 @@ struct TVector2
 	TVector2(vec_t *o)
 		: X(o[0]), Y(o[1])
 	{
+	}
+
+	template<typename U>
+	explicit operator TVector2<U> () const noexcept {
+		return TVector2<U>(static_cast<U>(X), static_cast<U>(Y));
 	}
 
 	void Zero()
@@ -375,6 +380,11 @@ struct TVector3
 	}
 
 	TVector3 (const TRotator<vec_t> &rot);
+	
+	template<typename U>
+	explicit operator TVector3<U> () const noexcept {
+		return TVector3<U>(static_cast<U>(X), static_cast<U>(Y), static_cast<U>(Z));
+	}
 
 	void Zero()
 	{
@@ -736,6 +746,11 @@ struct TVector4
 	TVector4(const vec_t v[4])
 		: TVector4(v[0], v[1], v[2], v[3])
 	{
+	}
+
+	template<typename U>
+	explicit operator TVector4<U> () const noexcept {
+		return TVector4<U>(static_cast<U>(X), static_cast<U>(Y), static_cast<U>(Z), static_cast<U>(W));
 	}
 
 	void Zero()
@@ -1504,12 +1519,6 @@ template<class T>
 inline TAngle<T> absangle(const TAngle<T> &a1, const TAngle<T> &a2)
 {
 	return fabs(deltaangle(a2, a1));
-}
-
-template<class T>
-inline TAngle<T> clamp(const TAngle<T> &angle, const TAngle<T> &min, const TAngle<T> &max)
-{
-	return TAngle<T>::fromDeg(clamp(angle.Degrees(), min.Degrees(), max.Degrees()));
 }
 
 inline TAngle<double> VecToAngle(double x, double y)

@@ -261,7 +261,9 @@ enum EExplodeFlags
 	XF_EXPLICITDAMAGETYPE = 8,
 	XF_NOSPLASH = 16,
 	XF_THRUSTZ = 32,
-
+	XF_THRUSTLESS = 64,
+	XF_NOALLIES = 128,
+	XF_CIRCULAR = 256,
 };
 
 // Flags for A_RadiusThrust
@@ -653,6 +655,7 @@ enum EQuakeFlags
 	QF_GROUNDONLY =		1 << 7,
 	QF_AFFECTACTORS =	1 << 8,
 	QF_SHAKEONLY =		1 << 9,
+	QF_DAMAGEFALLOFF =	1 << 10,
 };
 
 // A_CheckProximity flags
@@ -1228,7 +1231,10 @@ enum RadiusDamageFlags
 	RADF_SOURCEISSPOT = 4,
 	RADF_NODAMAGE = 8,
 	RADF_THRUSTZ = 16,
-	RADF_OLDRADIUSDAMAGE = 32
+	RADF_OLDRADIUSDAMAGE = 32,
+	RADF_THRUSTLESS = 64,
+	RADF_NOALLIES = 128,
+	RADF_CIRCULAR = 256
 };
 
 enum IntermissionSequenceType

@@ -50,6 +50,7 @@
 #include "vm.h"
 #include "actorinlines.h"
 #include "a_ceiling.h"
+#include "shadowinlines.h"
 
 #include "gi.h"
 
@@ -61,8 +62,8 @@ static FRandom pr_lookformonsters ("LookForMonsters");
 static FRandom pr_lookforplayers ("LookForPlayers");
 static FRandom pr_scaredycat ("Anubis");
 	   FRandom pr_chase ("Chase");
-static FRandom pr_facetarget ("FaceTarget");
-static FRandom pr_railface ("RailFace");
+	   FRandom pr_facetarget ("FaceTarget");
+	   FRandom pr_railface ("RailFace");
 static FRandom pr_look2 ("LookyLooky");
 static FRandom pr_look3 ("IGotHooky");
 static FRandom pr_slook ("SlooK");
@@ -3018,15 +3019,11 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 			self->Angles.Pitch = other_pitch;
 		}
 		self->Angles.Pitch += pitch_offset;
+		A_Face_ShadowHandling(self, other, max_pitch, other_pitch, true);
 	}
 	
 
-
-	// This will never work well if the turn angle is limited.
-	if (max_turn == nullAngle && (self->Angles.Yaw == other_angle) && other->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE) )
-    {
-		self->Angles.Yaw += DAngle::fromDeg(pr_facetarget.Random2() * (45 / 256.));
-    }
+	A_Face_ShadowHandling(self,other,max_turn,other_angle,false);
 }
 
 void A_FaceTarget(AActor *self)
@@ -3073,10 +3070,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 	// Let the aim trail behind the player
 	self->Angles.Yaw = self->AngleTo(self->target, -self->target->Vel.X * 3, -self->target->Vel.Y * 3);
 
-	if (self->target->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE))
-	{
-		self->Angles.Yaw += DAngle::fromDeg(pr_railface.Random2() * 45./256);
-	}
+	A_MonsterRail_ShadowHandling(self);
 
 	FRailParams p;
 
