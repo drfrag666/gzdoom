@@ -583,6 +583,15 @@ void FGameConfigFile::DoGlobalSetup ()
 				// ooooh boy did i open a can of worms with this one.
 				i_pauseinbackground = !(i_soundinbackground);
 			}
+			if (last < 225)
+			{
+				if (const auto var = FindCVar("gl_lightmode", NULL))
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Int);
+					v.Int /= 8; // all legacy modes map to 0, ZDoom software to 1 and Vanilla software to 2.
+					var->SetGenericRep(v, CVAR_Int);
+				}
+			}
 		}
 	}
 	else badconfig = true;
