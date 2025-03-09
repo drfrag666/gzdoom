@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 3.1.0 )
+cmake_minimum_required( VERSION 3.16.0 )
 
 include(precompiled_headers)
 
@@ -319,10 +319,7 @@ endif()
 
 # Check for thread_local keyword, it's optional at the moment
 
-CHECK_CXX_SOURCE_COMPILES("thread_local int i; int main() { i = 0; }"
-	HAVE_THREAD_LOCAL)
-
-if( NOT HAVE_THREAD_LOCAL )
+if ( NOT (cxx_thread_local IN_LIST CMAKE_CXX_COMPILE_FEATURES) )
 	message( SEND_ERROR "C++ compiler doesn't support thread_local storage duration specifier" )
 endif()
 
@@ -450,7 +447,7 @@ set( PLAT_WIN32_SOURCES
 	common/platform/win32/win32polyvideo.cpp)
 
 if (HAVE_VULKAN)
-	set (PLAT_WIN32_SOURCES ${PLAT_WIN32_SOURCES} common/platform/win32/win32vulkanvideo.cpp )
+	list (APPEND PLAT_WIN32_SOURCES common/platform/win32/win32vulkanvideo.cpp )
 endif()
 
 # todo: implement an actual crash catcher for ARM
@@ -762,10 +759,6 @@ set( VM_JIT_SOURCES
 	common/scripting/jit/jit_store.cpp
 )
 
-# This is disabled for now because I cannot find a way to give the .pch file a different name.
-# Visual C++ 2015 seems hell-bent on only allowing one .pch file with the same name as the executable.
-#enable_precompiled_headers( g_pch2.h FASTMATH_PCH_SOURCES )
-
 # Enable fast math for some sources
 set( FASTMATH_SOURCES
 	rendering/swrenderer/r_all.cpp
@@ -839,11 +832,11 @@ if (HAVE_GLES2)
 		common/rendering/gles/glad/src/glad.c
 	)
 
-	set (FASTMATH_SOURCES ${FASTMATH_SOURCES} ${GLES_SOURCES})
+	list (APPEND FASTMATH_SOURCES ${GLES_SOURCES})
 endif()
 
 if (HAVE_VULKAN)
-	set (FASTMATH_SOURCES ${FASTMATH_SOURCES} ${VULKAN_SOURCES})
+	list (APPEND FASTMATH_SOURCES ${VULKAN_SOURCES})
 endif()
 
 set (POLYBACKEND_SOURCES
@@ -1102,6 +1095,7 @@ set (PCH_SOURCES
 	common/textures/formats/stbtexture.cpp
 	common/textures/formats/anmtexture.cpp
 	common/textures/formats/startscreentexture.cpp
+	common/textures/formats/qoitexture.cpp
 	common/textures/hires/hqresize.cpp
 	common/models/models_md3.cpp
 	common/models/models_md2.cpp
@@ -1140,7 +1134,6 @@ set (PCH_SOURCES
 	common/utility/i_time.cpp
 	common/utility/m_argv.cpp
 	common/utility/s_playlist.cpp
-	common/utility/zstrformat.cpp
 	common/utility/name.cpp
 	common/utility/r_memory.cpp
 	common/thirdparty/base64.cpp
@@ -1258,14 +1251,7 @@ else()
 	set( NOT_COMPILED_SOURCE_FILES ${NOT_COMPILED_SOURCE_FILES} ${VM_JIT_SOURCES} )
 endif()
 
-if( MSVC )
-	enable_precompiled_headers( g_pch.h PCH_SOURCES )
-else()
-	# Temporary solution for compilers other than MSVC
-	set_source_files_properties( ${PCH_SOURCES} PROPERTIES COMPILE_FLAGS "-include g_pch.h" )
-endif()
-
-add_executable( zdoom WIN32 MACOSX_BUNDLE
+set( ZDOOM_SOURCES
 	${HEADER_FILES}
 	${NOT_COMPILED_SOURCE_FILES}
 	${SYSTEM_SOURCES}
@@ -1273,6 +1259,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${PCH_SOURCES}
 	common/utility/x86.cpp
 	common/thirdparty/strnatcmp.c
+	common/thirdparty/stb/stb_sprintf.c
 	common/utility/zstring.cpp
 	common/utility/findfile.cpp
 	common/thirdparty/math/asin.c
@@ -1295,10 +1282,18 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	common/thirdparty/math/fastsin.cpp
 )
 
+set( ZDOOM_NONPCH_SOURCES ${ZDOOM_SOURCES} )
+list( REMOVE_ITEM ZDOOM_NONPCH_SOURCES ${PCH_SOURCES} )
+
+add_executable( zdoom WIN32 MACOSX_BUNDLE ${ZDOOM_SOURCES} )
+
+target_precompile_headers( zdoom PRIVATE g_pch.h )
+
 set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )
 set_source_files_properties( common/engine/sc_man.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h" )
 set_source_files_properties( ${NOT_COMPILED_SOURCE_FILES} PROPERTIES HEADER_FILE_ONLY TRUE )
+set_source_files_properties( ${ZDOOM_NONPCH_SOURCES} common/textures/hires/hqresize.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS TRUE )
 
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
@@ -1313,7 +1308,7 @@ if( UNIX )
 	endif()
 endif()
 
-target_link_libraries( zdoom ${PROJECT_LIBRARIES} gdtoa lzma ${ZMUSIC_LIBRARIES} )
+target_link_libraries( zdoom ${PROJECT_LIBRARIES} lzma ${ZMUSIC_LIBRARIES} )
 
 include_directories(
 	BEFORE
@@ -1324,6 +1319,7 @@ include_directories(
 	common/cutscenes
 	common/thirdparty/libsmackerdec/include
 	common/thirdparty
+	common/thirdparty/stb
 	common/textures
 	common/textures/formats
 	common/textures/hires
@@ -1374,9 +1370,7 @@ include_directories(
 	scripting
 	scripting/zscript
 	rendering
-	../libraries/gdtoa
 	../libraries/ZVulkan/include
-	${CMAKE_BINARY_DIR}/libraries/gdtoa
 	${SYSTEM_SOURCES_DIR}
 )
 
@@ -1570,6 +1564,7 @@ source_group("Common\\Third Party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_D
 source_group("Common\\Third Party\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/math/.+")
 source_group("Common\\Third Party\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/rapidjson/.+")
 source_group("Common\\Third Party\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/sfmt/.+")
+source_group("Common\\Third Party\\stb" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/stb/.+")
 source_group("Utility" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/.+")
 source_group("Utility\\Node Builder" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/nodebuilder/.+")
 source_group("Utility\\Smackerdec" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/smackerdec/.+")
