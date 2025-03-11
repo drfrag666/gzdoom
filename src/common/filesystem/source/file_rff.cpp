@@ -33,9 +33,11 @@
 **
 */
 
-#include "resourcefile.h"
+#include "resourcefile_internal.h"
+#include "fs_swap.h"
 
-#include "printf.h"
+namespace FileSys {
+	using namespace byteswap;
 
 //==========================================================================
 //
@@ -74,7 +76,7 @@ struct RFFLump
 struct FRFFLump : public FUncompressedLump
 {
 	virtual FileReader *GetReader();
-	virtual int FillCache();
+	virtual int FillCache() override;
 
 	uint32_t		IndexNum;
 
@@ -109,9 +111,9 @@ class FRFFFile : public FResourceFile
 	FRFFLump *Lumps;
 
 public:
-	FRFFFile(const char * filename, FileReader &file);
+	FRFFFile(const char * filename, FileReader &file, StringPool* sp);
 	virtual ~FRFFFile();
-	virtual bool Open(bool quiet, LumpFilterInfo* filter);
+	virtual bool Open(LumpFilterInfo* filter);
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
 };
 
@@ -122,8 +124,8 @@ public:
 //
 //==========================================================================
 
-FRFFFile::FRFFFile(const char *filename, FileReader &file)
-: FResourceFile(filename, file)
+FRFFFile::FRFFFile(const char *filename, FileReader &file, StringPool* sp)
+: FResourceFile(filename, file, sp)
 {
 	Lumps = NULL;
 }
@@ -134,7 +136,7 @@ FRFFFile::FRFFFile(const char *filename, FileReader &file)
 //
 //==========================================================================
 
-bool FRFFFile::Open(bool quiet, LumpFilterInfo*)
+bool FRFFFile::Open(LumpFilterInfo*)
 {
 	RFFLump *lumps;
 	RFFInfo header;
@@ -171,7 +173,7 @@ bool FRFFFile::Open(bool quiet, LumpFilterInfo*)
 		name[len+2] = lumps[i].Extension[1];
 		name[len+3] = lumps[i].Extension[2];
 		name[len+4] = 0;
-		Lumps[i].LumpNameSetup(name);
+		Lumps[i].LumpNameSetup(name, stringpool);
 	}
 	delete[] lumps;
 	GenerateHash();
@@ -219,7 +221,7 @@ int FRFFLump::FillCache()
 
 	if (Flags & LUMPF_COMPRESSED)
 	{
-		int cryptlen = min<int> (LumpSize, 256);
+		int cryptlen = std::min<int> (LumpSize, 256);
 		uint8_t *data = (uint8_t *)Cache;
 
 		for (int i = 0; i < cryptlen; ++i)
@@ -237,7 +239,7 @@ int FRFFLump::FillCache()
 //
 //==========================================================================
 
-FResourceFile *CheckRFF(const char *filename, FileReader &file, bool quiet, LumpFilterInfo* filter)
+FResourceFile *CheckRFF(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	char head[4];
 
@@ -248,8 +250,8 @@ FResourceFile *CheckRFF(const char *filename, FileReader &file, bool quiet, Lump
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "RFF\x1a", 4))
 		{
-			auto rf = new FRFFFile(filename, file);
-			if (rf->Open(quiet, filter)) return rf;
+			auto rf = new FRFFFile(filename, file, sp);
+			if (rf->Open(filter)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader
 			delete rf;
@@ -259,4 +261,4 @@ FResourceFile *CheckRFF(const char *filename, FileReader &file, bool quiet, Lump
 }
 
 
-
+}

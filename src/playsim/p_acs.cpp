@@ -1933,7 +1933,7 @@ void FBehaviorContainer::LoadDefaultModules ()
 		FScanner sc(lump);
 		while (sc.GetString())
 		{
-			int acslump = fileSystem.CheckNumForName (sc.String, ns_acslibrary);
+			int acslump = fileSystem.CheckNumForName (sc.String, FileSys::ns_acslibrary);
 			if (acslump >= 0)
 			{
 				LoadModule (acslump);
@@ -2280,8 +2280,7 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len,
 
 	if (fr == NULL)
 	{
-		fileSystem.GetFileShortName (ModuleName, lumpnum);
-		ModuleName[8] = 0;
+		strcpy(ModuleName, fileSystem.GetFileShortName (lumpnum));
 	}
 	else
 	{
@@ -2571,7 +2570,7 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len,
 				if (parse[i])
 				{
 					FBehavior *module = NULL;
-					int lump = fileSystem.CheckNumForName (&parse[i], ns_acslibrary);
+					int lump = fileSystem.CheckNumForName (&parse[i], FileSys::ns_acslibrary);
 					if (lump < 0)
 					{
 						Printf (TEXTCOLOR_RED "Could not find ACS library %s.\n", &parse[i]);

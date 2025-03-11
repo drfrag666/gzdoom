@@ -45,6 +45,7 @@
 #include "poly_renderstate.h"
 #include "poly_hwtexture.h"
 #include "engineerrors.h"
+#include "cmdlib.h"
 
 #ifdef _WIN32
 extern bool d3davailable;

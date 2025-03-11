@@ -32,9 +32,11 @@
 **
 */
 
-#include "resourcefile.h"
-#include "printf.h"
+#include "resourcefile_internal.h"
 
+namespace FileSys {
+
+	using namespace byteswap;
 //==========================================================================
 //
 //
@@ -44,14 +46,14 @@
 struct dpackfile_t
 {
 	char	name[56];
-	int		filepos, filelen;
+	uint32_t		filepos, filelen;
 } ;
 
 struct dpackheader_t
 {
-	int		ident;		// == IDPAKHEADER
-	int		dirofs;
-	int		dirlen;
+	uint32_t		ident;		// == IDPAKHEADER
+	uint32_t		dirofs;
+	uint32_t		dirlen;
 } ;
 
 
@@ -64,8 +66,8 @@ struct dpackheader_t
 class FPakFile : public FUncompressedFile
 {
 public:
-	FPakFile(const char * filename, FileReader &file);
-	bool Open(bool quiet, LumpFilterInfo* filter);
+	FPakFile(const char * filename, FileReader &file, StringPool* sp);
+	bool Open(LumpFilterInfo* filter);
 };
 
 
@@ -77,8 +79,8 @@ public:
 //
 //==========================================================================
 
-FPakFile::FPakFile(const char *filename, FileReader &file) 
-	: FUncompressedFile(filename, file)
+FPakFile::FPakFile(const char *filename, FileReader &file, StringPool* sp)
+	: FUncompressedFile(filename, file, sp)
 {
 }
 
@@ -88,7 +90,7 @@ FPakFile::FPakFile(const char *filename, FileReader &file)
 //
 //==========================================================================
 
-bool FPakFile::Open(bool quiet, LumpFilterInfo* filter)
+bool FPakFile::Open(LumpFilterInfo* filter)
 {
 	dpackheader_t header;
 
@@ -104,7 +106,7 @@ bool FPakFile::Open(bool quiet, LumpFilterInfo* filter)
 
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
-		Lumps[i].LumpNameSetup(fileinfo[i].name);
+		Lumps[i].LumpNameSetup(fileinfo[i].name, stringpool);
 		Lumps[i].Flags = LUMPF_FULLPATH;
 		Lumps[i].Owner = this;
 		Lumps[i].Position = LittleLong(fileinfo[i].filepos);
@@ -123,7 +125,7 @@ bool FPakFile::Open(bool quiet, LumpFilterInfo* filter)
 //
 //==========================================================================
 
-FResourceFile *CheckPak(const char *filename, FileReader &file, bool quiet, LumpFilterInfo* filter)
+FResourceFile *CheckPak(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	char head[4];
 
@@ -134,8 +136,8 @@ FResourceFile *CheckPak(const char *filename, FileReader &file, bool quiet, Lump
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "PACK", 4))
 		{
-			auto rf = new FPakFile(filename, file);
-			if (rf->Open(quiet, filter)) return rf;
+			auto rf = new FPakFile(filename, file, sp);
+			if (rf->Open(filter)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader
 			delete rf;
@@ -144,3 +146,4 @@ FResourceFile *CheckPak(const char *filename, FileReader &file, bool quiet, Lump
 	return NULL;
 }
 
+}

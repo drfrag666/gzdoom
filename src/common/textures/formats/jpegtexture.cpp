@@ -46,6 +46,7 @@ extern "C"
 #include "bitmap.h"
 #include "imagehelpers.h"
 #include "image.h"
+#include "m_swap.h"
 
 
 struct FLumpSourceMgr : public jpeg_source_mgr
@@ -184,8 +185,8 @@ class FJPEGTexture : public FImageSource
 public:
 	FJPEGTexture (int lumpnum, int width, int height);
 
-	int CopyPixels(FBitmap *bmp, int conversion) override;
-	PalettedPixels CreatePalettedPixels(int conversion) override;
+	int CopyPixels(FBitmap *bmp, int conversion, int frame = 0) override;
+	PalettedPixels CreatePalettedPixels(int conversion, int frame = 0) override;
 };
 
 //==========================================================================
@@ -259,7 +260,7 @@ FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
 //
 //==========================================================================
 
-PalettedPixels FJPEGTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FJPEGTexture::CreatePalettedPixels(int conversion, int frame)
 {
 	auto lump = fileSystem.OpenFileReader (SourceLump);
 	JSAMPLE *buff = NULL;
@@ -286,7 +287,7 @@ PalettedPixels FJPEGTexture::CreatePalettedPixels(int conversion)
 			(cinfo.out_color_space == JCS_YCbCr && cinfo.num_components == 3) ||
 			(cinfo.out_color_space == JCS_GRAYSCALE && cinfo.num_components == 1)))
 		{
-			Printf(TEXTCOLOR_ORANGE "Unsupported color format in %s\n", fileSystem.GetFileFullPath(SourceLump).GetChars());
+			Printf(TEXTCOLOR_ORANGE "Unsupported color format in %s\n", fileSystem.GetFileFullPath(SourceLump).c_str());
 		}
 		else
 		{
@@ -381,7 +382,7 @@ PalettedPixels FJPEGTexture::CreatePalettedPixels(int conversion)
 	}
 	catch (int)
 	{
-		Printf(TEXTCOLOR_ORANGE "JPEG error in %s\n", fileSystem.GetFileFullPath(SourceLump).GetChars());
+		Printf(TEXTCOLOR_ORANGE "JPEG error in %s\n", fileSystem.GetFileFullPath(SourceLump).c_str());
 	}
 	jpeg_destroy_decompress(&cinfo);
 	if (buff != NULL)
@@ -400,7 +401,7 @@ PalettedPixels FJPEGTexture::CreatePalettedPixels(int conversion)
 //
 //===========================================================================
 
-int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion)
+int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
 	PalEntry pe[256];
 
@@ -425,7 +426,7 @@ int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion)
 			(cinfo.out_color_space == JCS_YCbCr && cinfo.num_components == 3) ||
 			(cinfo.out_color_space == JCS_GRAYSCALE && cinfo.num_components == 1)))
 		{
-			Printf(TEXTCOLOR_ORANGE "Unsupported color format in %s\n", fileSystem.GetFileFullPath(SourceLump).GetChars());
+			Printf(TEXTCOLOR_ORANGE "Unsupported color format in %s\n", fileSystem.GetFileFullPath(SourceLump).c_str());
 		}
 		else
 		{
@@ -478,7 +479,7 @@ int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion)
 	}
 	catch (int)
 	{
-		Printf(TEXTCOLOR_ORANGE "JPEG error in %s\n", fileSystem.GetFileFullPath(SourceLump).GetChars());
+		Printf(TEXTCOLOR_ORANGE "JPEG error in %s\n", fileSystem.GetFileFullPath(SourceLump).c_str());
 	}
 	jpeg_destroy_decompress(&cinfo);
 	return 0;
