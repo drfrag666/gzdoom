@@ -390,7 +390,7 @@ public:
 		Y = y;
 	}
 
-	int CopyPixels(FBitmap* dest, int conversion)
+	int CopyPixels(FBitmap* dest, int conversion, int frame = 0) override
 	{
 		auto& pic = sheetBitmaps[baseSheet];
 		dest->CopyPixelDataRGB(0, 0, pic.GetPixels() + 4 * (X + pic.GetWidth() * Y), Width, Height, 4, pic.GetWidth() * 4, 0, CF_BGRA);
@@ -422,7 +422,7 @@ void FFont::ReadSheetFont(std::vector<FileSys::FolderEntry> &folderdata, int wid
 
 				FBitmap* sheetimg = &sheetBitmaps[sheetBitmaps.Reserve(1)];
 				sheetimg->Create(tex->GetTexelWidth(), tex->GetTexelHeight());
-				tex->GetTexture()->GetImage()->CopyPixels(sheetimg, FImageSource::normal);
+				tex->GetTexture()->GetImage()->CopyPixels(sheetimg, FImageSource::normal, 0);
 
 				for (int y = 0; y < numtex_y; y++)
 				{
