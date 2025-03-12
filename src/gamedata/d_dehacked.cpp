@@ -1622,6 +1622,11 @@ static int PatchThing (int thingy)
 						value[0] &= ~MF_TRANSLUCENT; // clean the slot
 						vchanged[2] = true; value[2] |= 2; // let the TRANSLUCxx code below handle it
 					}
+					if (value[0] & MF_MISSILE)
+					{
+						// all missiles in Doom are NOTELEPORT, the other flags are for consistency.
+						info->flags2 |= MF2_IMPACT | MF2_PCROSS | MF2_NOTELEPORT;
+					}
 					if ((info->flags & MF_MISSILE) && (info->flags2 & MF2_NOTELEPORT)
 						&& !(value[0] & MF_MISSILE))
 					{
@@ -3729,7 +3734,8 @@ void FinishDehPatch ()
 	OrgSprNames.Reset();
 	TouchedActors.Reset();
 	EnglishStrings.Clear();
-	GStrings.SetOverrideStrings(std::move(DehStrings));
+	GStrings.SetOverrideStrings(DehStrings);
+	DehStrings.Clear();
 
 	// Now it gets nasty: We have to fiddle around with the weapons' ammo use info to make Doom's original
 	// ammo consumption work as intended.
@@ -4031,12 +4037,14 @@ void ClearBounces(AActor* info)
 void SetMissile(AActor* info)
 {
 	info->flags |= MF_MISSILE;
+	info->flags2 |= MF2_NOTELEPORT | MF2_PCROSS | MF2_IMPACT;
 	if (info->BounceFlags & BOUNCE_DEH) info->BounceFlags = BOUNCE_Classic | BOUNCE_DEH;
 }
 
 void ClearMissile(AActor* info)
 {
 	info->flags &= ~MF_MISSILE;
+	info->flags2 &= ~(MF2_NOTELEPORT | MF2_PCROSS | MF2_IMPACT);
 	if (info->BounceFlags & BOUNCE_DEH) info->BounceFlags = BOUNCE_Grenade | BOUNCE_DEH;
 }
 
