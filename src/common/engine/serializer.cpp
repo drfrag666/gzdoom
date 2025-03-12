@@ -604,6 +604,8 @@ void FSerializer::WriteObjects()
 		{
 			auto obj = w->mDObjects[i];
 
+			if(obj->ObjectFlags & OF_Transient) continue;
+
 			BeginObject(nullptr);
 			w->Key("classtype");
 			w->String(obj->GetClass()->TypeName.GetChars());
@@ -696,7 +698,6 @@ void FSerializer::ReadObjects(bool hubtravel)
 			}
 			EndArray();
 
-			assert(!founderrors);
 			if (founderrors)
 			{
 				Printf(TEXTCOLOR_RED "Failed to restore all objects in savegame\n");
