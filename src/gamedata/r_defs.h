@@ -667,6 +667,7 @@ struct sector_t
 		float GlowHeight;
 		FTextureID Texture;
 		TextureManipulation TextureFx;
+		FTextureID skytexture[2];
 	};
 
 
@@ -690,10 +691,10 @@ struct sector_t
 
 	int		special;					// map-defined sector special type
 
-	int			sky;						// MBF sky transfer info.
+	int			skytransfer;						// MBF sky transfer info.
 	int 		validcount;					// if == validcount, already checked
 
-	uint32_t bottommap, midmap, topmap;		// killough 4/4/98: dynamic colormaps
+	uint32_t selfmap, bottommap, midmap, topmap;		// killough 4/4/98: dynamic colormaps
 											// [RH] these can also be blend values if
 											//		the alpha mask is non-zero
 
@@ -825,7 +826,6 @@ public:
 
 	int CheckSpriteGlow(int lightlevel, const DVector3 &pos);
 	bool GetWallGlow(float *topglowcolor, float *bottomglowcolor);
-
 
 	void SetXOffset(int pos, double o)
 	{
@@ -1194,6 +1194,15 @@ struct side_t
 		walltop = 0,
 		wallbottom = 1,
 	};
+	enum ESkew
+	{
+		skew_none = 0,
+		skew_front_floor = 1,
+		skew_front_ceiling = 2,
+		skew_back_floor = 3,
+		skew_back_ceiling = 4
+	};
+
 	struct part
 	{
 		enum EPartFlags
@@ -1209,7 +1218,8 @@ struct side_t
 		double xScale;
 		double yScale;
 		TObjPtr<DInterpolation*> interpolation;
-		int flags;
+		int16_t flags;
+		int8_t skew;
 		FTextureID texture;
 		TextureManipulation TextureFx;
 		PalEntry SpecialColors[2];

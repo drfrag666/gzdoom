@@ -1835,13 +1835,17 @@ void FLevelLocals::Init()
 			flags |= LEVEL_HASFADETABLE;
 		}
 	}
+
+
+	globalcolormap = R_ColormapNumForName(info->CustomColorMap.GetChars());
 	airsupply = info->airsupply*TICRATE;
 	outsidefog = info->outsidefog;
 	WallVertLight = info->WallVertLight*2;
 	WallHorizLight = info->WallHorizLight*2;
 	if (info->gravity != 0.f)
 	{
-		gravity = info->gravity * 35/TICRATE;
+		if (info->gravity == DBL_MAX) gravity = 0;
+		else gravity = info->gravity * 35/TICRATE;
 	}
 	if (info->aircontrol != 0.f)
 	{

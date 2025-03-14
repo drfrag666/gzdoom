@@ -972,14 +972,14 @@ void HWHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	if (texture->isFullbright())
 	{
 		// glowing textures are always drawn full bright without color
-		di->SetColor(state, 255, 0, false, origin->colormap, 1.f);
-		di->SetFog(state, 255, 0, false, &origin->colormap, false);
+		SetColor(state, di->Level, di->lightmode, 255, 0, false, origin->colormap, 1.f);
+		SetFog(state, di->Level, di->lightmode, 255, 0, false, &origin->colormap, false);
 	}
 	else
 	{
 		int rel = getExtraLight();
-		di->SetColor(state, origin->lightlevel, rel, di->isFullbrightScene(), origin->colormap, 1.0f);
-		di->SetFog(state, origin->lightlevel, rel, di->isFullbrightScene(), &origin->colormap, false);
+		SetColor(state, di->Level, di->lightmode, origin->lightlevel, rel, di->isFullbrightScene(), origin->colormap, 1.0f);
+		SetFog(state, di->Level, di->lightmode, origin->lightlevel, rel, di->isFullbrightScene(), &origin->colormap, false);
 	}
 
 
@@ -1029,7 +1029,7 @@ void HWEEHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 		sector->GetTexture(sector_t::ceiling) == skyflatnum)
 	{
 		HWSkyInfo skyinfo;
-		skyinfo.init(di, sector->sky, 0);
+		skyinfo.init(di, sector, sector_t::ceiling, sector->skytransfer, 0);
 		HWSkyPortal sky(screen->mSkyData, mState, &skyinfo, true);
 		sky.DrawContents(di, state);
 	}
