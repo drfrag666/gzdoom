@@ -322,10 +322,10 @@ FString level_info_t::LookupLevelName(uint32_t *langtable)
 	if (flags & LEVEL_LOOKUPLEVELNAME)
 	{
 		const char *thename;
-		const char *lookedup = GStrings.GetString(LevelName, langtable);
+		const char *lookedup = GStrings.GetString(LevelName.GetChars(), langtable);
 		if (lookedup == NULL)
 		{
-			thename = LevelName;
+			thename = LevelName.GetChars();
 		}
 		else
 		{
@@ -382,9 +382,9 @@ level_info_t *level_info_t::CheckLevelRedirect ()
 				if (playeringame[i] && players[i].mo->FindInventory(type))
 				{
 					// check for actual presence of the map.
-					if (P_CheckMapData(RedirectMapName))
+					if (P_CheckMapData(RedirectMapName.GetChars()))
 					{
-						return FindLevelInfo(RedirectMapName);
+						return FindLevelInfo(RedirectMapName.GetChars());
 					}
 					break;
 				}
@@ -404,14 +404,14 @@ level_info_t *level_info_t::CheckLevelRedirect ()
 					if (playeringame[i] && (var = GetCVar(i, RedirectCVAR.GetChars())))
 					{
 						if (var->ToInt())
-							if (P_CheckMapData(RedirectCVARMapName))
-								return FindLevelInfo(RedirectCVARMapName);
+							if (P_CheckMapData(RedirectCVARMapName.GetChars()))
+								return FindLevelInfo(RedirectCVARMapName.GetChars());
 					}
 				}
 			}
 			else if (var->ToInt())
-				if (P_CheckMapData(RedirectCVARMapName))
-					return FindLevelInfo(RedirectCVARMapName);
+				if (P_CheckMapData(RedirectCVARMapName.GetChars()))
+					return FindLevelInfo(RedirectCVARMapName.GetChars());
 		}
 	}
 	return NULL;
@@ -831,7 +831,7 @@ void FMapInfoParser::ParseCluster()
 			else
 			{
 				FStringf testlabel("CLUSTERENTER%d", clusterinfo->cluster);
-				if (GStrings.MatchDefaultString(testlabel, clusterinfo->EnterText))
+				if (GStrings.MatchDefaultString(testlabel.GetChars(), clusterinfo->EnterText.GetChars()))
 				{
 					clusterinfo->EnterText = testlabel;
 					clusterinfo->flags |= CLUSTER_LOOKUPENTERTEXT;
@@ -846,7 +846,7 @@ void FMapInfoParser::ParseCluster()
 			else
 			{
 				FStringf testlabel("CLUSTEREXIT%d", clusterinfo->cluster);
-				if (GStrings.MatchDefaultString(testlabel, clusterinfo->ExitText))
+				if (GStrings.MatchDefaultString(testlabel.GetChars(), clusterinfo->ExitText.GetChars()))
 				{
 					clusterinfo->ExitText = testlabel;
 					clusterinfo->flags |= CLUSTER_LOOKUPEXITTEXT;
@@ -923,7 +923,7 @@ void FMapInfoParser::ParseCluster()
 	// Remap Hexen's CLUS?MSG lumps to the string table, if applicable. The code here only checks what can actually be in an IWAD.
 	if (clusterinfo->flags & CLUSTER_EXITTEXTINLUMP)
 	{
-		int lump = fileSystem.CheckNumForFullName(clusterinfo->ExitText, true);
+		int lump = fileSystem.CheckNumForFullName(clusterinfo->ExitText.GetChars(), true);
 		if (lump > 0)
 		{
 			// Check if this comes from either Hexen.wad or Hexdd.wad and if so, map to the string table.
@@ -932,7 +932,7 @@ void FMapInfoParser::ParseCluster()
 			if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 			{
 				FStringf key("TXT_%.5s_%s", fn, clusterinfo->ExitText.GetChars());
-				if (GStrings.exists(key))
+				if (GStrings.exists(key.GetChars()))
 				{
 					clusterinfo->ExitText = key;
 					clusterinfo->flags &= ~CLUSTER_EXITTEXTINLUMP;
@@ -2145,7 +2145,7 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 			// This checks for a string labelled with the MapName and if that is identical to what got parsed here
 			// the string table entry will be used.
 
-			if (GStrings.MatchDefaultString(levelinfo->MapName, sc.String))
+			if (GStrings.MatchDefaultString(levelinfo->MapName.GetChars(), sc.String))
 			{
 				levelinfo->flags |= LEVEL_LOOKUPLEVELNAME;
 				levelinfo->LevelName = levelinfo->MapName;
@@ -2162,7 +2162,7 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 					if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 					{
 						FStringf key("TXT_%.5s_%s", fn, levelinfo->MapName.GetChars());
-						if (GStrings.exists(key))
+						if (GStrings.exists(key.GetChars()))
 						{
 							levelinfo->flags |= LEVEL_LOOKUPLEVELNAME;
 							levelinfo->LevelName = key;
@@ -2175,7 +2175,7 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 
 	// Set up levelnum now so that you can use Teleport_NewMap specials
 	// to teleport to maps with standard names without needing a levelnum.
-	levelinfo->levelnum = GetDefaultLevelNum(levelinfo->MapName);
+	levelinfo->levelnum = GetDefaultLevelNum(levelinfo->MapName.GetChars());
 
 	// Does this map have a song defined via SNDINFO's $map command?
 	// Set that as this map's default music if it does.
@@ -2296,7 +2296,7 @@ void FMapInfoParser::ParseEpisodeInfo ()
 
 	if (optional && !remove)
 	{
-		if (!P_CheckMapData(map))
+		if (!P_CheckMapData(map.GetChars()))
 		{
 			// If the episode is optional and the map does not exist
 			// just ignore this episode definition.
@@ -2586,7 +2586,7 @@ void G_ParseMapInfo (FString basemapinfo)
 	{
 		FMapInfoParser parse;
 		level_info_t defaultinfo;
-		int baselump = fileSystem.GetNumForFullName(basemapinfo);
+		int baselump = fileSystem.GetNumForFullName(basemapinfo.GetChars());
 		if (fileSystem.GetFileContainer(baselump) > 0)
 		{
 			I_FatalError("File %s is overriding core lump %s.", 

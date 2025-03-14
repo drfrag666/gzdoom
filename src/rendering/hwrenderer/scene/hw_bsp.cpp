@@ -622,7 +622,7 @@ void HWDrawInfo::RenderParticles(subsector_t *sub, sector_t *front)
 	{
 		if (mClipPortal)
 		{
-			int clipres = mClipPortal->ClipPoint(Level->Particles[i].Pos);
+			int clipres = mClipPortal->ClipPoint(Level->Particles[i].Pos.XY());
 			if (clipres == PClip_InFront) continue;
 		}
 

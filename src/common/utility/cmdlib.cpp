@@ -69,12 +69,15 @@ FString progdir;
 //
 //==========================================================================
 
-static inline bool IsSeperator (int c)
+static inline bool IsSeperator (int c, bool forcebackslash = false)
 {
 	if (c == '/')
 		return true;
 #ifdef _WIN32
 	if (c == '\\')
+		return true;
+#else
+	if (forcebackslash && c == '\\')
 		return true;
 #endif
 	return false;
@@ -247,11 +250,11 @@ bool GetFileInfo(const char* pathname, size_t *size, time_t *time)
 //
 //==========================================================================
 
-void DefaultExtension (FString &path, const char *extension)
+void DefaultExtension (FString &path, const char *extension, bool forcebackslash)
 {
 	const char *src = &path[int(path.Len())-1];
 
-	while (src != &path[0] && !IsSeperator(*src))
+	while (src != &path[0] && !IsSeperator(*src, forcebackslash))
 	{
 		if (*src == '.')
 			return;                 // it has an extension
@@ -273,7 +276,7 @@ void DefaultExtension (FString &path, const char *extension)
 //
 //==========================================================================
 
-FString ExtractFilePath (const char *path)
+FString ExtractFilePath (const char *path, bool forcebackslash)
 {
 	const char *src;
 
@@ -282,7 +285,7 @@ FString ExtractFilePath (const char *path)
 //
 // back up until a \ or the start
 //
-	while (src != path && !IsSeperator(*(src-1)))
+	while (src != path && !IsSeperator(*(src-1), forcebackslash))
 		src--;
 
 	return FString(path, src - path);
@@ -296,7 +299,7 @@ FString ExtractFilePath (const char *path)
 //
 //==========================================================================
 
-FString ExtractFileBase (const char *path, bool include_extension)
+FString ExtractFileBase (const char *path, bool include_extension, bool forcebackslash)
 {
 	const char *src, *dot;
 
@@ -305,7 +308,7 @@ FString ExtractFileBase (const char *path, bool include_extension)
 	if (src >= path)
 	{
 		// back up until a / or the start
-		while (src != path && !IsSeperator(*(src-1)))
+		while (src != path && !IsSeperator(*(src-1), forcebackslash))
 			src--;
 
 		// Check for files with drive specification but no path
@@ -328,6 +331,29 @@ FString ExtractFileBase (const char *path, bool include_extension)
 	}
 	return FString();
 }
+
+//==========================================================================
+//
+// SplitPath
+//
+// splits a path into directory, base name and extension
+//
+//==========================================================================
+
+ void SplitPath(const char* path, FString& directory, FString& base, FString& ext, bool forcebackslash)
+{
+	directory = ExtractFilePath(path, forcebackslash);
+	base = ExtractFileBase(path, forcebackslash);
+	auto dot = base.LastIndexOf('.');
+	if (dot > -1)
+	{
+		ext = base.Mid(dot + 1);
+		base.Truncate(dot);
+	}
+	else
+		ext = "";
+}
+
 
 //==========================================================================
 //
@@ -532,7 +558,7 @@ void CreatePath(const char *fn)
 	{
 		FString name(fn);
 		name += '/';
-		DoCreatePath(name);
+		DoCreatePath(name.GetChars());
 	}
 	else
 	{
@@ -809,13 +835,13 @@ FString ExpandEnvVars(const char *searchpathstring)
 		if (length != 0)
 		{
 			FString varname = FString(dollar + 1, length);
-			if (stricmp(varname, "progdir") == 0)
+			if (varname.Compare("progdir") == 0)
 			{
 				out += progdir;
 			}
 			else
 			{
-				char *varvalue = getenv(varname);
+				char *varvalue = getenv(varname.GetChars());
 				if ( (varvalue != NULL) && (strlen(varvalue) != 0) )
 				{
 					out += varvalue;
@@ -883,7 +909,7 @@ FString NicePath(const char *path)
 			slash = path + strlen(path);
 		}
 		FString who(path, slash - path);
-		pwstruct = getpwnam(who);
+		pwstruct = getpwnam(who.GetChars());
 	}
 	if (pwstruct == NULL)
 	{
@@ -990,7 +1016,7 @@ void md5Update(FileReader& file, MD5Context& md5, unsigned len)
 	{
 		t = std::min<unsigned>(len, sizeof(readbuf));
 		len -= t;
-		t = (long)file.Read(readbuf, t);
+		t = (unsigned)file.Read(readbuf, t);
 		md5.Update(readbuf, t);
 	}
 }

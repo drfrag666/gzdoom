@@ -483,14 +483,14 @@ void FKeyBindings::ArchiveBindings(FConfigFile *f, const char *matchcmd)
 				f->ClearKey(ConfigKeyName(i));
 			}
 		}
-		else if (matchcmd == nullptr || stricmp(Binds[i], matchcmd) == 0)
+		else if (matchcmd == nullptr || Binds[i].CompareNoCase(matchcmd) == 0)
 		{
 			if (Binds[i][0] == '\1')
 			{
 				Binds[i] = "";
 				continue;
 			}
-			f->SetValueForKey(ConfigKeyName(i), Binds[i]);
+			f->SetValueForKey(ConfigKeyName(i), Binds[i].GetChars());
 			if (matchcmd != nullptr)
 			{ // If saving a specific command, set a marker so that
 			  // it does not get saved in the general binding list.
@@ -519,7 +519,7 @@ int FKeyBindings::GetKeysForCommand (const char *cmd, int *first, int *second)
 
 	while (i < NUM_KEYS && c < 2)
 	{
-		if (stricmp (cmd, Binds[i]) == 0)
+		if (stricmp (cmd, Binds[i].GetChars()) == 0)
 		{
 			if (c++ == 0)
 				*first = i;
@@ -544,7 +544,7 @@ TArray<int> FKeyBindings::GetKeysForCommand (const char *cmd)
 
 	while (i < NUM_KEYS)
 	{
-		if (stricmp (cmd, Binds[i]) == 0)
+		if (stricmp (cmd, Binds[i].GetChars()) == 0)
 		{
 			result.Push(i);
 		}
@@ -565,7 +565,7 @@ void FKeyBindings::UnbindACommand (const char *str)
 
 	for (i = 0; i < NUM_KEYS; i++)
 	{
-		if (!stricmp (str, Binds[i]))
+		if (!stricmp (str, Binds[i].GetChars()))
 		{
 			Binds[i] = "";
 		}
@@ -592,7 +592,7 @@ void FKeyBindings::DefaultBind(const char *keyname, const char *cmd)
 	}
 	for (int i = 0; i < NUM_KEYS; ++i)
 	{
-		if (!Binds[i].IsEmpty() && stricmp (Binds[i], cmd) == 0)
+		if (!Binds[i].IsEmpty() && stricmp (Binds[i].GetChars(), cmd) == 0)
 		{ // This command is already bound to a key.
 			return;
 		}

@@ -36,6 +36,9 @@
 // Caution: LzmaDec also pulls in windows.h!
 #define NOMINMAX
 #include "LzmaDec.h"
+#include "Xz.h"
+// CRC table needs to be generated prior to reading XZ compressed files.
+#include "7zCrc.h"
 #include <miniz.h>
 #include <bzlib.h>
 #include <algorithm>
@@ -173,7 +176,7 @@ public:
 
 	ptrdiff_t Read (void *buffer, ptrdiff_t len) override
 	{
-		int err;
+		int err = 0;
 
 		if (File == nullptr)
 		{
@@ -185,7 +188,7 @@ public:
 		while (len > 0)
 		{
 			Stream.next_out = (Bytef*)buffer;
-			auto rlen = std::min<ptrdiff_t>(len, 0x40000000);
+			unsigned rlen = (unsigned)std::min<ptrdiff_t>(len, 0x40000000);
 			Stream.avail_out = rlen;
 			buffer = Stream.next_out + rlen;
 			len -= rlen;
@@ -301,7 +304,7 @@ public:
 		while (len > 0)
 		{
 			Stream.next_out = (char*)buffer;
-			auto rlen = std::min<ptrdiff_t>(len, 0x40000000);
+			unsigned rlen = (unsigned)std::min<ptrdiff_t>(len, 0x40000000);
 			Stream.avail_out = rlen;
 			buffer = Stream.next_out + rlen;
 			len -= rlen;
@@ -402,7 +405,7 @@ public:
 		OutProcessed = 0;
 
 		// Read zip LZMA properties header
-		if (File->Read(header, sizeof(header)) < (long)sizeof(header))
+		if (File->Read(header, sizeof(header)) < (ptrdiff_t)sizeof(header))
 		{
 			DecompressionError("DecompressorLZMA: File too short\n");
 			return false;
@@ -485,6 +488,141 @@ public:
 		if (len != 0)
 		{
 			DecompressionError ("Ran out of data in LZMA stream");
+			return 0;
+		}
+
+		return (ptrdiff_t)(next_out - (Byte *)buffer);
+	}
+
+	void FillBuffer ()
+	{
+		auto numread = File->Read(InBuff, BUFF_SIZE);
+
+		if (numread < BUFF_SIZE)
+		{
+			SawEOF = true;
+		}
+		InPos = 0;
+		InSize = numread;
+	}
+
+};
+
+//==========================================================================
+//
+// DecompressorXZ
+//
+// The XZ wrapper
+// reads data from a XZ compressed stream
+//
+//==========================================================================
+
+// Wraps around a Decompressor to decompress a XZ stream
+class DecompressorXZ : public DecompressorBase
+{
+	enum { BUFF_SIZE = 4096 };
+
+	bool SawEOF = false;
+	CXzUnpacker Stream;
+	size_t Size;
+	size_t InPos, InSize;
+	size_t OutProcessed;
+	uint8_t InBuff[BUFF_SIZE];
+
+public:
+
+	bool Open(FileReader *file, size_t uncompressed_size)
+	{
+		if (File != nullptr)
+		{
+			DecompressionError("File already open");
+			return false;
+		}
+
+		uint8_t header[12];
+		File = file;
+
+		Size = uncompressed_size;
+		OutProcessed = 0;
+
+		// Read zip XZ properties header
+		if (File->Read(header, sizeof(header)) < (long)sizeof(header))
+		{
+			DecompressionError("DecompressorXZ: File too short\n");
+			return false;
+		}
+
+		File->Seek(-(ptrdiff_t)sizeof(header), FileReader::SeekCur);
+
+		FillBuffer();
+
+		XzUnpacker_Construct(&Stream, &g_Alloc);
+		XzUnpacker_Init(&Stream);
+
+		return true;
+	}
+
+	~DecompressorXZ ()
+	{
+		XzUnpacker_Free(&Stream);
+	}
+
+	ptrdiff_t Read (void *buffer, ptrdiff_t len) override
+	{
+		if (File == nullptr)
+		{
+			DecompressionError("File not open");
+			return 0;
+		}
+
+		if (g_CrcTable[1] == 0)
+		{
+			CrcGenerateTable();
+		}
+
+		int err;
+		Byte *next_out = (Byte *)buffer;
+
+		do
+		{
+			ECoderFinishMode finish_mode = CODER_FINISH_ANY;
+			ECoderStatus status;
+			size_t out_processed = len;
+			size_t in_processed = InSize;
+
+			err = XzUnpacker_Code(&Stream, next_out, &out_processed, InBuff + InPos, &in_processed, SawEOF, finish_mode, &status);
+			InPos += in_processed;
+			InSize -= in_processed;
+			next_out += out_processed;
+			len = (long)(len - out_processed);
+			if (err != SZ_OK)
+			{
+				DecompressionError ("Corrupt XZ stream", err);
+				return 0;
+			}
+			if (in_processed == 0 && out_processed == 0)
+			{
+				if (status != CODER_STATUS_FINISHED_WITH_MARK)
+				{
+					DecompressionError ("Corrupt XZ stream");
+					return 0;
+				}
+			}
+			if (InSize == 0 && !SawEOF)
+			{
+				FillBuffer ();
+			}
+		} while (err == SZ_OK && len != 0);
+
+		if (err != Z_OK && err != Z_STREAM_END)
+		{
+			DecompressionError ("Corrupt XZ stream");
+			return 0;
+		}
+
+		if (len != 0)
+		{
+			DecompressionError ("Ran out of data in XZ stream");
 			return 0;
 		}
 
@@ -659,7 +797,7 @@ public:
 		if (len > 0xffffffff) len = 0xffffffff;	// this format cannot be larger than 4GB.
 
 		uint8_t *Out = (uint8_t*)buffer;
-		unsigned AvailOut = len;
+		ptrdiff_t AvailOut = len;
 
 		do
 		{
@@ -673,7 +811,7 @@ public:
 					break;
 			}
 
-			unsigned int copy = std::min<unsigned int>(Stream.InternalOut, AvailOut);
+			unsigned int copy = (unsigned)std::min<ptrdiff_t>(Stream.InternalOut, AvailOut);
 			if(copy > 0)
 			{
 				memcpy(Out, Stream.WindowData, copy);
@@ -698,7 +836,7 @@ public:
 		while(AvailOut && Stream.State != STREAM_FINAL);
 
 		assert(AvailOut == 0);
-		return (long)(Out - (uint8_t*)buffer);
+		return (ptrdiff_t)(Out - (uint8_t*)buffer);
 	}
 };
 
@@ -739,6 +877,18 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, b
 		case METHOD_LZMA:
 		{
 			auto idec = new DecompressorLZMA;
+			dec = idec;
+			idec->EnableExceptions(exceptions);
+			if (!idec->Open(p, length))
+			{
+				delete idec;
+				return false;
+			}
+			break;
+		}
+		case METHOD_XZ:
+		{
+			auto idec = new DecompressorXZ;
 			dec = idec;
 			idec->EnableExceptions(exceptions);
 			if (!idec->Open(p, length))

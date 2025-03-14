@@ -172,7 +172,7 @@ FString FSavegameManager::ExtractSaveComment(FSerializer &arc)
 
 FString FSavegameManager::BuildSaveName(const char* prefix, int slot)
 {
-	return G_BuildSaveName(FStringf("%s%02d", prefix, slot));
+	return G_BuildSaveName(FStringf("%s%02d", prefix, slot).GetChars());
 }
 
 //=============================================================================

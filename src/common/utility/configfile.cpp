@@ -88,7 +88,7 @@ FConfigFile::FConfigFile (const FConfigFile &other)
 	Sections = CurrentSection = NULL;
 	LastSectionPtr = &Sections;
 	CurrentEntry = NULL;
-	ChangePathName (other.PathName);
+	ChangePathName (other.PathName.GetChars());
 	*this = other;
 	OkayToWrite = other.OkayToWrite;
 	FileExisted = other.FileExisted;
@@ -137,7 +137,7 @@ FConfigFile &FConfigFile::operator = (const FConfigFile &other)
 	while (fromsection != NULL)
 	{
 		fromentry = fromsection->RootEntry;
-		tosection = NewConfigSection (fromsection->SectionName);
+		tosection = NewConfigSection (fromsection->SectionName.GetChars());
 		while (fromentry != NULL)
 		{
 			NewConfigEntry (tosection, fromentry->Key, fromentry->Value);
@@ -606,7 +606,7 @@ void FConfigFile::LoadConfigFile ()
 
 	FileExisted = FileExists(PathName.GetChars());
 
-	if (!file.OpenFile (PathName))
+	if (!file.OpenFile (PathName.GetChars()))
 	{
 		if (!FileExisted)
 			return;
@@ -746,7 +746,7 @@ FConfigFile::FConfigEntry *FConfigFile::ReadMultiLineValue(FileReader *file, FCo
 		// Append this line to the value.
 		value << readbuf;
 	}
-	return NewConfigEntry(section, key, value);
+	return NewConfigEntry(section, key, value.GetChars());
 }
 
 //====================================================================
@@ -794,7 +794,7 @@ bool FConfigFile::WriteConfigFile () const
 		return true;
 	}
 
-	FileWriter *file = FileWriter::Open (PathName);
+	FileWriter *file = FileWriter::Open (PathName.GetChars());
 	FConfigSection *section;
 	FConfigEntry *entry;
 
