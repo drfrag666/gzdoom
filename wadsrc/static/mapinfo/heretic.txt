@@ -323,6 +323,14 @@ skill nightmare
 	Name = "$MNU_BLACKPLAGUE"
 }
 
+skill extreme_lzd
+{
+	DoubleSpawn
+	MonsterHealth = 0.7
+	SpawnFilter = Hard
+	Name = "$MNU_EXTREME"
+}
+
 clearepisodes
 episode e1m1
 {

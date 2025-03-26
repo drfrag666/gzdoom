@@ -1269,6 +1269,7 @@ OptionMenu "MiscOptions" protected
 	Option "$MISCMNU_CLEANMENU",				"m_cleanscale", "OffOn"
 	Option "$MISCMNU_CLEANSTAT",				"wi_cleantextscale", "OnOff"
 	Option "$MISCMNU_WIPERCENT",				"wi_percents", "OnOff"
+	Option "$MISCMNU_HIDEEXTREME",				"m_hideextreme", "OnOff"
 	StaticText " "
 	Option "$MISCMNU_ALWAYSTALLY",				"sv_alwaystally", "AlwaysTally"
 	
